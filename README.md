@@ -1,5 +1,5 @@
-# DUO-LINER Corporativo V2
+# DUO-LINER Industrial V4
 
-Sitio web corporativo con catálogo interactivo.
+Versión industrial premium inspirada en estética técnica moderna.
 
 Login demo: admin / 1234

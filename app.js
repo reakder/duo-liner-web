@@ -1,3 +1,412 @@
-const products={sensitivo:{image:"assets/catalogo-pagina-4.jpg",badge:"20 a 100 mm",category:"Sellado por torque",title:"Liner Sensitivo tipo Arandela y Sensitivo de Torque",description:"Material que sella por presión al momento del torque, adhiriéndose a la boca del envase para mantener fresco el producto y brindar protección al sellado.",features:["Productos secos o pastosos","Envases plásticos y vidrio","Adherencia por torque","No inductivo"]},triseal:{image:"assets/catalogo-pagina-5.jpg",badge:"20 a 100 mm",category:"Espuma laminada",title:"Liner Tri-Seal o de Espuma Laminada",description:"Solución recomendada para productos secos, viscosos o líquidos. Provee sellado hermético y funciona como liner no inductivo.",features:["Productos cosméticos","Productos alimenticios","Productos químicos","Sellado hermético"]},induccion:{image:"assets/catalogo-pagina-6.jpg",badge:"0% permeable",category:"Inducción polietileno",title:"Liner de Inducción Polietileno",description:"Liner laminado e inductivo de una pieza con sellado pelable. Recomendado para productos líquidos, pastosos, viscosos y secos.",features:["Para envases PP y PE","Sellado pelable","Espesor 0.25 mm","Alta protección"]},banda:{image:"assets/catalogo-pagina-8.jpg",badge:"Presentación y seguridad",category:"Banda termoencogible",title:"Banda Termoencogible",description:"Insumos para seguridad de productos farmacéuticos, alimenticios, cosméticos y veterinarios, adaptables a envases cilíndricos, cónicos e irregulares.",features:["Mayor seguridad","Excelente presentación","Envases irregulares","Alta calidad"]},tampografia:{image:"assets/catalogo-pagina-9.jpg",badge:"Alta definición",category:"Impresión especializada",title:"Tampografía",description:"Proceso de impresión gráfica para objetos pequeños, curvos, planos, cóncavos y convexos, ideal para acabados de alta calidad.",features:["Objetos publicitarios","Tapas y merchandising","Curvos y planos","Alta definición"]}};
-function initLoader(){const l=document.getElementById('loader');if(l)setTimeout(()=>l.remove(),2200)}function initMenu(){const b=document.getElementById('menuBtn'),m=document.getElementById('menu');if(!b||!m)return;b.onclick=()=>m.classList.toggle('open');m.querySelectorAll('a').forEach(a=>a.onclick=()=>m.classList.remove('open'))}function initReveal(){const els=document.querySelectorAll('.reveal');const ob=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:.15});els.forEach(e=>ob.observe(e))}function initTabs(){document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{const p=products[t.dataset.key];document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');const img=document.getElementById('pImg');if(!img)return;img.style.opacity=0;setTimeout(()=>{img.src=p.image;document.getElementById('pBadge').textContent=p.badge;document.getElementById('pCat').textContent=p.category;document.getElementById('pTitle').textContent=p.title;document.getElementById('pDesc').textContent=p.description;document.getElementById('pFeatures').innerHTML=p.features.map(f=>`<span>${f}</span>`).join('');img.style.opacity=1},220)})}function initQuote(){const f=document.getElementById('quoteForm');if(!f)return;f.onsubmit=e=>{e.preventDefault();const n=qName.value,c=qCompany.value,p=qPhone.value,pr=qProduct.value,m=qMessage.value;const text=`Hola DUO-LINER, deseo solicitar una cotización.%0A%0ANombre: ${encodeURIComponent(n)}%0AEmpresa: ${encodeURIComponent(c)}%0ATeléfono: ${encodeURIComponent(p)}%0AProducto: ${encodeURIComponent(pr)}%0ADetalle: ${encodeURIComponent(m)}`;window.open('https://wa.me/50258544448?text='+text,'_blank')}}
-const KEY='duoliner_demo_db_v3';function getDB(){return JSON.parse(localStorage.getItem(KEY)||'{"clientes":[],"pedidos":[],"pagos":[]}')}function saveDB(db){localStorage.setItem(KEY,JSON.stringify(db))}function money(n){return 'Q'+Number(n||0).toLocaleString('es-GT',{minimumFractionDigits:2,maximumFractionDigits:2})}function todayISO(){return new Date().toISOString().slice(0,10)}function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}function daysSince(d){return Math.max(0,Math.floor((new Date()-new Date(d+'T00:00:00'))/86400000))}function login(){const u=document.getElementById('user')?.value.trim(),p=document.getElementById('pass')?.value.trim();if(u==='admin'&&p==='1234'){localStorage.setItem('duoliner_session','ok');location.href='dashboard.html'}else{const e=document.getElementById('error');if(e)e.textContent='Usuario o contraseña incorrectos.'}}function checkAuth(){if(location.pathname.includes('dashboard')&&localStorage.getItem('duoliner_session')!=='ok')location.href='login.html'}function logout(){localStorage.removeItem('duoliner_session');location.href='login.html'}function showView(n,b){document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));document.getElementById('view-'+n)?.classList.remove('hidden');document.querySelectorAll('.side-link').forEach(x=>x.classList.remove('active'));if(b)b.classList.add('active');renderAll()}function clienteName(id){return(getDB().clientes.find(c=>c.id===id)||{}).nombre||'Sin cliente'}function pedidoName(id){const p=getDB().pedidos.find(x=>x.id===id);return p?`${p.producto} - ${money(p.total)}`:'Sin pedido'}function pagosDePedido(id){return getDB().pagos.filter(p=>p.pedido_id===id).reduce((a,p)=>a+Number(p.monto||0),0)}function saldoPedido(p){return Number(p.total||0)-pagosDePedido(p.id)}function saldoCliente(id){return getDB().pedidos.filter(p=>p.cliente_id===id&&p.estado!=='Cancelado').reduce((a,p)=>a+saldoPedido(p),0)}function addCliente(){const db=getDB(),nombre=clienteNombre.value.trim();if(!nombre)return alert('Ingresa el nombre del cliente.');db.clientes.push({id:uid(),nombre,nit:clienteNit.value.trim(),telefono:clienteTelefono.value.trim(),correo:clienteCorreo.value.trim(),direccion:clienteDireccion.value.trim(),fecha:todayISO()});saveDB(db);['clienteNombre','clienteNit','clienteTelefono','clienteCorreo','clienteDireccion'].forEach(id=>document.getElementById(id).value='');renderAll()}function deleteCliente(id){if(!confirm('¿Eliminar cliente?'))return;const db=getDB();db.clientes=db.clientes.filter(c=>c.id!==id);db.pedidos=db.pedidos.filter(p=>p.cliente_id!==id);db.pagos=db.pagos.filter(p=>p.cliente_id!==id);saveDB(db);renderAll()}function addPedido(){const db=getDB(),cliente_id=pedidoCliente.value;if(!cliente_id)return alert('Primero crea un cliente.');const producto=pedidoProducto.value.trim();if(!producto)return alert('Ingresa producto.');db.pedidos.push({id:uid(),cliente_id,fecha:todayISO(),producto,cantidad:Number(pedidoCantidad.value||0),total:Number(pedidoTotal.value||0),estado:pedidoEstado.value});saveDB(db);['pedidoProducto','pedidoCantidad','pedidoTotal'].forEach(id=>document.getElementById(id).value='');renderAll()}function updateEstado(id,estado){const db=getDB(),p=db.pedidos.find(x=>x.id===id);if(p)p.estado=estado;saveDB(db);renderAll()}function deletePedido(id){if(!confirm('¿Eliminar pedido?'))return;const db=getDB();db.pedidos=db.pedidos.filter(p=>p.id!==id);db.pagos=db.pagos.filter(p=>p.pedido_id!==id);saveDB(db);renderAll()}function addPago(){const db=getDB(),cliente_id=pagoCliente.value,pedido_id=pagoPedido.value,monto=Number(pagoMonto.value||0);if(!cliente_id||!pedido_id||monto<=0)return alert('Selecciona cliente, pedido y monto.');db.pagos.push({id:uid(),cliente_id,pedido_id,fecha:todayISO(),monto,metodo:pagoMetodo.value.trim(),referencia:pagoReferencia.value.trim()});saveDB(db);['pagoMonto','pagoMetodo','pagoReferencia'].forEach(id=>document.getElementById(id).value='');renderAll()}function deletePago(id){if(!confirm('¿Eliminar pago?'))return;const db=getDB();db.pagos=db.pagos.filter(p=>p.id!==id);saveDB(db);renderAll()}function renderSelects(){const db=getDB(),opts=db.clientes.map(c=>`<option value="${c.id}">${c.nombre}</option>`).join('');['pedidoCliente','pagoCliente'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=opts||'<option value="">Sin clientes</option>'});const pc=document.getElementById('pagoCliente'),cid=pc?pc.value:'',ped=db.pedidos.filter(p=>!cid||p.cliente_id===cid),po=ped.map(p=>`<option value="${p.id}">${p.producto} - saldo ${money(saldoPedido(p))}</option>`).join(''),pp=document.getElementById('pagoPedido');if(pp)pp.innerHTML=po||'<option value="">Sin pedidos</option>';if(pc&&!pc.dataset.bound){pc.dataset.bound='1';pc.addEventListener('change',renderSelects)}}function renderTables(){const db=getDB();if(document.getElementById('tablaClientes'))tablaClientes.innerHTML=`<tr><th>Cliente</th><th>NIT</th><th>Teléfono</th><th>Correo</th><th>Saldo</th><th></th></tr>${db.clientes.map(c=>`<tr><td>${c.nombre}</td><td>${c.nit||'-'}</td><td>${c.telefono||'-'}</td><td>${c.correo||'-'}</td><td>${money(saldoCliente(c.id))}</td><td><button class="small-btn danger-btn" onclick="deleteCliente('${c.id}')">Eliminar</button></td></tr>`).join('')}`;const rows=db.pedidos.map(p=>`<tr><td>${clienteName(p.cliente_id)}</td><td>${p.producto}</td><td>${p.cantidad}</td><td>${p.fecha}</td><td>${daysSince(p.fecha)} días</td><td>${money(p.total)}</td><td>${money(saldoPedido(p))}</td><td><select onchange="updateEstado('${p.id}',this.value)">${['Nuevo','En proceso','Pendiente de pago','Entregado','Cancelado'].map(e=>`<option ${p.estado===e?'selected':''}>${e}</option>`).join('')}</select></td><td><button class="small-btn danger-btn" onclick="deletePedido('${p.id}')">Eliminar</button></td></tr>`).join('');if(document.getElementById('tablaPedidos'))tablaPedidos.innerHTML=`<tr><th>Cliente</th><th>Pedido</th><th>Cantidad</th><th>Fecha</th><th>Días</th><th>Total</th><th>Saldo</th><th>Estado</th><th></th></tr>${rows}`;if(document.getElementById('tablaRecientes'))tablaRecientes.innerHTML=`<tr><th>Cliente</th><th>Pedido</th><th>Fecha</th><th>Días</th><th>Saldo</th><th>Estado</th></tr>${db.pedidos.slice(-8).reverse().map(p=>`<tr><td>${clienteName(p.cliente_id)}</td><td>${p.producto}</td><td>${p.fecha}</td><td>${daysSince(p.fecha)} días</td><td>${money(saldoPedido(p))}</td><td><span class="badge-state">${p.estado}</span></td></tr>`).join('')}`;if(document.getElementById('tablaPagos'))tablaPagos.innerHTML=`<tr><th>Fecha</th><th>Cliente</th><th>Pedido</th><th>Monto</th><th>Método</th><th>Referencia</th><th></th></tr>${db.pagos.map(p=>`<tr><td>${p.fecha}</td><td>${clienteName(p.cliente_id)}</td><td>${pedidoName(p.pedido_id)}</td><td>${money(p.monto)}</td><td>${p.metodo||'-'}</td><td>${p.referencia||'-'}</td><td><button class="small-btn danger-btn" onclick="deletePago('${p.id}')">Eliminar</button></td></tr>`).join('')}`;if(document.getElementById('tablaCuenta'))tablaCuenta.innerHTML=`<tr><th>Cliente</th><th>Pedidos</th><th>Total facturado</th><th>Pagado</th><th>Saldo</th></tr>${db.clientes.map(c=>{const ps=db.pedidos.filter(p=>p.cliente_id===c.id&&p.estado!=='Cancelado'),total=ps.reduce((a,p)=>a+Number(p.total||0),0),pagado=db.pagos.filter(p=>p.cliente_id===c.id).reduce((a,p)=>a+Number(p.monto||0),0);return`<tr><td>${c.nombre}</td><td>${ps.length}</td><td>${money(total)}</td><td>${money(pagado)}</td><td><b>${money(total-pagado)}</b></td></tr>`}).join('')}`}function renderKPIs(){const db=getDB(),k=document.getElementById('kpiClientes');if(!k)return;const abiertos=db.pedidos.filter(p=>!['Entregado','Cancelado'].includes(p.estado)).length,saldo=db.pedidos.filter(p=>p.estado!=='Cancelado').reduce((a,p)=>a+saldoPedido(p),0),pagos=db.pagos.reduce((a,p)=>a+Number(p.monto||0),0);k.textContent=db.clientes.length;kpiPedidos.textContent=abiertos;kpiSaldo.textContent=money(saldo);kpiPagos.textContent=money(pagos)}function renderAll(){renderSelects();renderTables();renderKPIs()}function seedDemo(){saveDB({clientes:[{id:'c1',nombre:'Cliente Industrial ABC',nit:'1234567-8',telefono:'5555-1111',correo:'compras@abc.com',direccion:'Guatemala',fecha:todayISO()},{id:'c2',nombre:'Distribuidora Central',nit:'7654321-0',telefono:'5555-2222',correo:'ventas@central.com',direccion:'Mixco',fecha:todayISO()}],pedidos:[{id:'p1',cliente_id:'c1',fecha:'2026-05-20',producto:'Sello 45mm',cantidad:1000,total:2500,estado:'En proceso'},{id:'p2',cliente_id:'c2',fecha:'2026-05-24',producto:'Sello personalizado 63mm',cantidad:500,total:1850,estado:'Pendiente de pago'}],pagos:[{id:'pa1',cliente_id:'c1',pedido_id:'p1',fecha:'2026-05-22',monto:1000,metodo:'Transferencia',referencia:'TRX-001'}]});renderAll()}checkAuth();document.addEventListener('DOMContentLoaded',()=>{initLoader();initMenu();initReveal();initTabs();initQuote();renderAll()});
+const topbar = document.getElementById("topbar");
+const menuButton = document.getElementById("menuButton");
+const navMenu = document.getElementById("navMenu");
+const cursorGlow = document.getElementById("cursorGlow");
+
+window.addEventListener("scroll", () => {
+  if (topbar) {
+    topbar.classList.toggle("scrolled", window.scrollY > 80);
+  }
+});
+
+if (menuButton && navMenu) {
+  menuButton.addEventListener("click", () => navMenu.classList.toggle("open"));
+  navMenu.querySelectorAll("a").forEach(a => a.addEventListener("click", () => navMenu.classList.remove("open")));
+}
+
+if (cursorGlow) {
+  document.addEventListener("mousemove", (event) => {
+    cursorGlow.style.left = event.clientX + "px";
+    cursorGlow.style.top = event.clientY + "px";
+  });
+}
+
+const reveals = document.querySelectorAll(".reveal");
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) entry.target.classList.add("visible");
+  });
+}, { threshold: 0.12 });
+
+reveals.forEach(item => observer.observe(item));
+
+const quoteForm = document.getElementById("quoteForm");
+
+if (quoteForm) {
+  quoteForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById("qName").value.trim();
+    const company = document.getElementById("qCompany").value.trim();
+    const phone = document.getElementById("qPhone").value.trim();
+    const product = document.getElementById("qProduct").value;
+    const message = document.getElementById("qMessage").value.trim();
+
+    const text = `Hola DUO-LINER, deseo solicitar una cotización.%0A%0A` +
+      `Nombre: ${encodeURIComponent(name)}%0A` +
+      `Empresa: ${encodeURIComponent(company)}%0A` +
+      `Teléfono: ${encodeURIComponent(phone)}%0A` +
+      `Producto: ${encodeURIComponent(product)}%0A` +
+      `Detalle: ${encodeURIComponent(message)}`;
+
+    window.open(`https://wa.me/50258544448?text=${text}`, "_blank");
+  });
+}
+
+/* Sistema demo */
+const KEY = "duoliner_demo_db_v5";
+
+function getDB() {
+  return JSON.parse(localStorage.getItem(KEY) || '{"clientes":[],"pedidos":[],"pagos":[]}');
+}
+
+function saveDB(db) {
+  localStorage.setItem(KEY, JSON.stringify(db));
+}
+
+function money(n) {
+  return "Q" + Number(n || 0).toLocaleString("es-GT", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function daysSince(dateStr) {
+  const start = new Date(dateStr + "T00:00:00");
+  return Math.max(0, Math.floor((new Date() - start) / 86400000));
+}
+
+function login() {
+  const user = document.getElementById("user")?.value.trim();
+  const pass = document.getElementById("pass")?.value.trim();
+
+  if (user === "admin" && pass === "1234") {
+    localStorage.setItem("duoliner_session", "ok");
+    location.href = "dashboard.html";
+  } else {
+    const error = document.getElementById("error");
+    if (error) error.textContent = "Usuario o contraseña incorrectos.";
+  }
+}
+
+function checkAuth() {
+  if (location.pathname.includes("dashboard") && localStorage.getItem("duoliner_session") !== "ok") {
+    location.href = "login.html";
+  }
+}
+
+function logout() {
+  localStorage.removeItem("duoliner_session");
+  location.href = "login.html";
+}
+
+function showView(name, button) {
+  document.querySelectorAll(".view").forEach(v => v.classList.add("hidden"));
+  const view = document.getElementById("view-" + name);
+  if (view) view.classList.remove("hidden");
+
+  document.querySelectorAll(".side-link").forEach(b => b.classList.remove("active"));
+  if (button) button.classList.add("active");
+
+  renderAll();
+}
+
+function clienteName(id) {
+  const db = getDB();
+  return (db.clientes.find(c => c.id === id) || {}).nombre || "Sin cliente";
+}
+
+function pedidoName(id) {
+  const db = getDB();
+  const p = db.pedidos.find(x => x.id === id);
+  return p ? `${p.producto} - ${money(p.total)}` : "Sin pedido";
+}
+
+function pagosDePedido(pedidoId) {
+  const db = getDB();
+  return db.pagos.filter(p => p.pedido_id === pedidoId).reduce((a, p) => a + Number(p.monto || 0), 0);
+}
+
+function saldoPedido(p) {
+  return Number(p.total || 0) - pagosDePedido(p.id);
+}
+
+function saldoCliente(clienteId) {
+  const db = getDB();
+  return db.pedidos.filter(p => p.cliente_id === clienteId && p.estado !== "Cancelado").reduce((a, p) => a + saldoPedido(p), 0);
+}
+
+function addCliente() {
+  const db = getDB();
+  const nombre = document.getElementById("clienteNombre").value.trim();
+  if (!nombre) return alert("Ingresa el nombre del cliente.");
+
+  db.clientes.push({
+    id: uid(),
+    nombre,
+    nit: document.getElementById("clienteNit").value.trim(),
+    telefono: document.getElementById("clienteTelefono").value.trim(),
+    correo: document.getElementById("clienteCorreo").value.trim(),
+    direccion: document.getElementById("clienteDireccion").value.trim(),
+    fecha: todayISO()
+  });
+
+  saveDB(db);
+  ["clienteNombre", "clienteNit", "clienteTelefono", "clienteCorreo", "clienteDireccion"].forEach(id => document.getElementById(id).value = "");
+  renderAll();
+}
+
+function deleteCliente(id) {
+  if (!confirm("¿Eliminar cliente? También se eliminarán sus pedidos y pagos.")) return;
+
+  const db = getDB();
+  db.clientes = db.clientes.filter(c => c.id !== id);
+  db.pedidos = db.pedidos.filter(p => p.cliente_id !== id);
+  db.pagos = db.pagos.filter(p => p.cliente_id !== id);
+
+  saveDB(db);
+  renderAll();
+}
+
+function addPedido() {
+  const db = getDB();
+  const cliente_id = document.getElementById("pedidoCliente").value;
+  if (!cliente_id) return alert("Primero crea un cliente.");
+
+  const producto = document.getElementById("pedidoProducto").value.trim();
+  if (!producto) return alert("Ingresa producto o descripción.");
+
+  db.pedidos.push({
+    id: uid(),
+    cliente_id,
+    fecha: todayISO(),
+    producto,
+    cantidad: Number(document.getElementById("pedidoCantidad").value || 0),
+    total: Number(document.getElementById("pedidoTotal").value || 0),
+    estado: document.getElementById("pedidoEstado").value
+  });
+
+  saveDB(db);
+  ["pedidoProducto", "pedidoCantidad", "pedidoTotal"].forEach(id => document.getElementById(id).value = "");
+  renderAll();
+}
+
+function updateEstado(id, estado) {
+  const db = getDB();
+  const p = db.pedidos.find(x => x.id === id);
+  if (p) p.estado = estado;
+  saveDB(db);
+  renderAll();
+}
+
+function deletePedido(id) {
+  if (!confirm("¿Eliminar pedido?")) return;
+
+  const db = getDB();
+  db.pedidos = db.pedidos.filter(p => p.id !== id);
+  db.pagos = db.pagos.filter(p => p.pedido_id !== id);
+
+  saveDB(db);
+  renderAll();
+}
+
+function addPago() {
+  const db = getDB();
+  const cliente_id = document.getElementById("pagoCliente").value;
+  const pedido_id = document.getElementById("pagoPedido").value;
+  const monto = Number(document.getElementById("pagoMonto").value || 0);
+
+  if (!cliente_id || !pedido_id || monto <= 0) return alert("Selecciona cliente, pedido y monto.");
+
+  db.pagos.push({
+    id: uid(),
+    cliente_id,
+    pedido_id,
+    fecha: todayISO(),
+    monto,
+    metodo: document.getElementById("pagoMetodo").value.trim(),
+    referencia: document.getElementById("pagoReferencia").value.trim()
+  });
+
+  saveDB(db);
+  ["pagoMonto", "pagoMetodo", "pagoReferencia"].forEach(id => document.getElementById(id).value = "");
+  renderAll();
+}
+
+function deletePago(id) {
+  if (!confirm("¿Eliminar pago?")) return;
+
+  const db = getDB();
+  db.pagos = db.pagos.filter(p => p.id !== id);
+
+  saveDB(db);
+  renderAll();
+}
+
+function renderSelects() {
+  const db = getDB();
+
+  const clienteOptions = db.clientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join("");
+
+  ["pedidoCliente", "pagoCliente"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = clienteOptions || '<option value="">Sin clientes</option>';
+  });
+
+  const pagoCliente = document.getElementById("pagoCliente");
+  const clienteId = pagoCliente ? pagoCliente.value : "";
+  const pedidos = db.pedidos.filter(p => !clienteId || p.cliente_id === clienteId);
+
+  const pedidoOptions = pedidos.map(p => `<option value="${p.id}">${p.producto} - saldo ${money(saldoPedido(p))}</option>`).join("");
+  const pagoPedido = document.getElementById("pagoPedido");
+
+  if (pagoPedido) pagoPedido.innerHTML = pedidoOptions || '<option value="">Sin pedidos</option>';
+
+  if (pagoCliente && !pagoCliente.dataset.bound) {
+    pagoCliente.dataset.bound = "1";
+    pagoCliente.addEventListener("change", renderSelects);
+  }
+}
+
+function renderTables() {
+  const db = getDB();
+
+  const tablaClientes = document.getElementById("tablaClientes");
+  if (tablaClientes) {
+    tablaClientes.innerHTML = `
+      <tr><th>Cliente</th><th>NIT</th><th>Teléfono</th><th>Correo</th><th>Saldo</th><th></th></tr>
+      ${db.clientes.map(c => `
+        <tr>
+          <td>${c.nombre}</td>
+          <td>${c.nit || "-"}</td>
+          <td>${c.telefono || "-"}</td>
+          <td>${c.correo || "-"}</td>
+          <td>${money(saldoCliente(c.id))}</td>
+          <td><button class="small-btn danger-btn" onclick="deleteCliente('${c.id}')">Eliminar</button></td>
+        </tr>
+      `).join("")}
+    `;
+  }
+
+  const pedidosRows = db.pedidos.map(p => `
+    <tr>
+      <td>${clienteName(p.cliente_id)}</td>
+      <td>${p.producto}</td>
+      <td>${p.cantidad}</td>
+      <td>${p.fecha}</td>
+      <td>${daysSince(p.fecha)} días</td>
+      <td>${money(p.total)}</td>
+      <td>${money(saldoPedido(p))}</td>
+      <td>
+        <select onchange="updateEstado('${p.id}', this.value)">
+          ${["Nuevo","En proceso","Pendiente de pago","Entregado","Cancelado"].map(e => `<option ${p.estado === e ? "selected" : ""}>${e}</option>`).join("")}
+        </select>
+      </td>
+      <td><button class="small-btn danger-btn" onclick="deletePedido('${p.id}')">Eliminar</button></td>
+    </tr>
+  `).join("");
+
+  const tablaPedidos = document.getElementById("tablaPedidos");
+  if (tablaPedidos) {
+    tablaPedidos.innerHTML = `<tr><th>Cliente</th><th>Pedido</th><th>Cantidad</th><th>Fecha</th><th>Días</th><th>Total</th><th>Saldo</th><th>Estado</th><th></th></tr>${pedidosRows}`;
+  }
+
+  const tablaRecientes = document.getElementById("tablaRecientes");
+  if (tablaRecientes) {
+    tablaRecientes.innerHTML = `
+      <tr><th>Cliente</th><th>Pedido</th><th>Fecha</th><th>Días</th><th>Saldo</th><th>Estado</th></tr>
+      ${db.pedidos.slice(-8).reverse().map(p => `
+        <tr>
+          <td>${clienteName(p.cliente_id)}</td>
+          <td>${p.producto}</td>
+          <td>${p.fecha}</td>
+          <td>${daysSince(p.fecha)} días</td>
+          <td>${money(saldoPedido(p))}</td>
+          <td><span class="badge-state">${p.estado}</span></td>
+        </tr>
+      `).join("")}
+    `;
+  }
+
+  const tablaPagos = document.getElementById("tablaPagos");
+  if (tablaPagos) {
+    tablaPagos.innerHTML = `
+      <tr><th>Fecha</th><th>Cliente</th><th>Pedido</th><th>Monto</th><th>Método</th><th>Referencia</th><th></th></tr>
+      ${db.pagos.map(p => `
+        <tr>
+          <td>${p.fecha}</td>
+          <td>${clienteName(p.cliente_id)}</td>
+          <td>${pedidoName(p.pedido_id)}</td>
+          <td>${money(p.monto)}</td>
+          <td>${p.metodo || "-"}</td>
+          <td>${p.referencia || "-"}</td>
+          <td><button class="small-btn danger-btn" onclick="deletePago('${p.id}')">Eliminar</button></td>
+        </tr>
+      `).join("")}
+    `;
+  }
+
+  const tablaCuenta = document.getElementById("tablaCuenta");
+  if (tablaCuenta) {
+    tablaCuenta.innerHTML = `
+      <tr><th>Cliente</th><th>Pedidos</th><th>Total facturado</th><th>Pagado</th><th>Saldo</th></tr>
+      ${db.clientes.map(c => {
+        const pedidos = db.pedidos.filter(p => p.cliente_id === c.id && p.estado !== "Cancelado");
+        const total = pedidos.reduce((a, p) => a + Number(p.total || 0), 0);
+        const pagado = db.pagos.filter(p => p.cliente_id === c.id).reduce((a, p) => a + Number(p.monto || 0), 0);
+        return `<tr><td>${c.nombre}</td><td>${pedidos.length}</td><td>${money(total)}</td><td>${money(pagado)}</td><td><b>${money(total - pagado)}</b></td></tr>`;
+      }).join("")}
+    `;
+  }
+}
+
+function renderKPIs() {
+  const db = getDB();
+  const kpiClientes = document.getElementById("kpiClientes");
+  if (!kpiClientes) return;
+
+  const abiertos = db.pedidos.filter(p => !["Entregado", "Cancelado"].includes(p.estado)).length;
+  const saldo = db.pedidos.filter(p => p.estado !== "Cancelado").reduce((a, p) => a + saldoPedido(p), 0);
+  const pagos = db.pagos.reduce((a, p) => a + Number(p.monto || 0), 0);
+
+  kpiClientes.textContent = db.clientes.length;
+  document.getElementById("kpiPedidos").textContent = abiertos;
+  document.getElementById("kpiSaldo").textContent = money(saldo);
+  document.getElementById("kpiPagos").textContent = money(pagos);
+}
+
+function renderAll() {
+  renderSelects();
+  renderTables();
+  renderKPIs();
+}
+
+function seedDemo() {
+  const db = {
+    clientes: [
+      { id: "c1", nombre: "Cliente Industrial ABC", nit: "1234567-8", telefono: "5555-1111", correo: "compras@abc.com", direccion: "Guatemala", fecha: todayISO() },
+      { id: "c2", nombre: "Distribuidora Central", nit: "7654321-0", telefono: "5555-2222", correo: "ventas@central.com", direccion: "Mixco", fecha: todayISO() }
+    ],
+    pedidos: [
+      { id: "p1", cliente_id: "c1", fecha: "2026-05-20", producto: "Sello 45mm", cantidad: 1000, total: 2500, estado: "En proceso" },
+      { id: "p2", cliente_id: "c2", fecha: "2026-05-24", producto: "Sello personalizado 63mm", cantidad: 500, total: 1850, estado: "Pendiente de pago" }
+    ],
+    pagos: [
+      { id: "pa1", cliente_id: "c1", pedido_id: "p1", fecha: "2026-05-22", monto: 1000, metodo: "Transferencia", referencia: "TRX-001" }
+    ]
+  };
+
+  saveDB(db);
+  renderAll();
+}
+
+checkAuth();
+document.addEventListener("DOMContentLoaded", renderAll);
