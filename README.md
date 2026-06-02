@@ -1,18 +1,5 @@
-# DUO-LINER Web
+# DUO-LINER Corporativo V2
 
-Archivos:
-- index.html: pagina publica
-- login.html: acceso
-- dashboard.html: sistema interno
-- styles.css: estilos
-- app.js: logica
-- logo-duo-liner.png: logo
+Sitio web corporativo con catálogo interactivo.
 
-Login demo:
-Usuario: admin
-Clave: 1234
-
-Contacto:
-Telefono/WhatsApp: +502 5854 4448
-Correo: gerencia@duo-liner.com
-Direccion: CA-9 Ruta al Atlantico 26-09 zona 18 Int. 5 Bodega 4. Guatemala, C.A.
+Login demo: admin / 1234
