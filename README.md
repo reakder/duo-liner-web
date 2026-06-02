@@ -1,3 +1,5 @@
-# DUO-LINER V7 Dark Futuristic
+# DUO-LINER V5 Stamp Industrial
 
-Estilo high-tech industrial packaging, neon cyan, dark mode.
+Landing industrial premium ultramoderna. Assets livianos: solo logo y PDF.
+
+Login demo: admin / 1234
