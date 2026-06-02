@@ -35,9 +35,10 @@ const menuToggle=document.getElementById("menuToggle"),navLinks=document.getElem
 
     const text = `Hola DUO-LINER, deseo solicitar una cotización.%0A%0ANombre: ${encodeURIComponent(name)}%0AEmpresa: ${encodeURIComponent(company)}%0ATeléfono: ${encodeURIComponent(phone)}%0AProducto: ${encodeURIComponent(product)}%0ADetalle: ${encodeURIComponent(message)}`;
 
-    window.open(`https://wa.me/50258544448?text=${text}`, "_blank");
+      window.open(`https://wa.me/50258544448?text=${text}`, "_blank");
   } catch (error) {
     alert("No se pudo enviar la cotización. Intenta nuevamente.");
     console.error(error);
   }
 });
+}
