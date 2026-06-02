@@ -1,1 +1,5 @@
-<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Ingresar | DUO-LINER</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="styles.css"></head><body class="login-body"><div class="login-shell"><a href="index.html"><img src="assets/logo-duo-liner.png" class="login-logo" alt="DUO-LINER"></a><div class="login-card"><span class="section-label">Portal administrativo</span><h1>Ingresar</h1><p class="login-help">Demo inicial. Usuario: <b>admin</b> / Clave: <b>1234</b></p><input id="user" placeholder="Usuario" autocomplete="username"><input id="pass" type="password" placeholder="Contraseña" autocomplete="current-password"><button onclick="login()">Ingresar</button><p id="error" class="form-error"></p><a class="back-link" href="index.html">← Volver a la página principal</a></div></div><script src="app.js"></script></body></html>
+# DUO-LINER V5 Stamp Industrial
+
+Landing industrial premium ultramoderna. Assets livianos: solo logo y PDF.
+
+Login demo: admin / 1234
