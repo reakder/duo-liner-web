@@ -1,1 +1,267 @@
-<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport " content="width=device-width,initial-scale=1.0"><title>Dashboard | DUO-LINER</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="assets/styles.css"></head><body class="app-body"><aside class="sidebar"><img src="logo-duo-liner.png" class="side-logo" alt="DUO-LINER"><nav><button class="side-link active" onclick="showView('dashboard',this)">Dashboard</button><button class="side-link" onclick="showView('clientes',this)">Clientes</button><button class="side-link" onclick="showView('pedidos',this)">Pedidos</button><button class="side-link" onclick="showView('pagos',this)">Pagos</button><button class="side-link" onclick="showView('cuenta',this)">Cuenta corriente</button><button class="side-link danger" onclick="logout()">Salir</button></nav></aside><main class="app-main"><section id="view-dashboard" class="view"><div class="app-head"><div><p class="section-title-small">Panel de control</p><h1>Dashboard</h1></div><button class="btn" onclick="seedDemo()">Cargar datos demo</button></div><div class="kpi-grid"><div class="kpi"><span>Clientes</span><strong id="kpiClientes">0</strong></div><div class="kpi"><span>Pedidos abiertos</span><strong id="kpiPedidos">0</strong></div><div class="kpi"><span>Saldo pendiente</span><strong id="kpiSaldo">Q0.00</strong></div><div class="kpi"><span>Pagos recibidos</span><strong id="kpiPagos">Q0.00</strong></div></div><div class="panel"><h2>Pedidos recientes</h2><div class="table-wrap"><table id="tablaRecientes"></table></div></div></section><section id="view-clientes" class="view hidden"><div class="app-head"><div><p class="section-title-small">Gestión</p><h1>Clientes</h1></div></div><div class="panel"><h2>Nuevo cliente</h2><div class="form-grid"><input id="clienteNombre" placeholder="Nombre / Empresa"><input id="clienteNit" placeholder="NIT"><input id="clienteTelefono" placeholder="Teléfono"><input id="clienteCorreo" placeholder="Correo"><input id="clienteDireccion" placeholder="Dirección"><button class="btn-form" onclick="addCliente()">Guardar cliente</button></div></div><div class="panel"><h2>Listado de clientes</h2><div class="table-wrap"><table id="tablaClientes"></table></div></div></section><section id="view-pedidos" class="view hidden"><div class="app-head"><div><p class="section-title-small">Control</p><h1>Pedidos</h1></div></div><div class="panel"><h2>Nuevo pedido</h2><div class="form-grid"><select id="pedidoCliente"></select><input id="pedidoProducto" placeholder="Producto / descripción"><input id="pedidoCantidad" type="number" placeholder="Cantidad"><input id="pedidoTotal" type="number" placeholder="Total Q"><select id="pedidoEstado"><option>Nuevo</option><option>En proceso</option><option>Pendiente de pago</option><option>Entregado</option><option>Cancelado</option></select><button class="btn-form" onclick="addPedido()">Guardar pedido</button></div></div><div class="panel"><h2>Listado de pedidos</h2><div class="table-wrap"><table id="tablaPedidos"></table></div></div></section><section id="view-pagos" class="view hidden"><div class="app-head"><div><p class="section-title-small">Cuenta</p><h1>Pagos</h1></div></div><div class="panel"><h2>Registrar pago</h2><div class="form-grid"><select id="pagoCliente"></select><select id="pagoPedido"></select><input id="pagoMonto" type="number" placeholder="Monto Q"><input id="pagoMetodo" placeholder="Método"><input id="pagoReferencia" placeholder="Referencia"><button class="btn-form" onclick="addPago()">Guardar pago</button></div></div><div class="panel"><h2>Historial de pagos</h2><div class="table-wrap"><table id="tablaPagos"></table></div></div></section><section id="view-cuenta" class="view hidden"><div class="app-head"><div><p class="section-title-small">Finanzas</p><h1>Cuenta corriente</h1></div></div><div class="panel"><h2>Saldos por cliente</h2><div class="table-wrap"><table id="tablaCuenta"></table></div></div></section></main><script src="assets/app.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard | DUO-LINER</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="app-body">
+
+<aside class="sidebar">
+    <img src="logo-duo-liner.png" class="side-logo" alt="DUO-LINER">
+
+    <nav>
+        <button class="side-link active" onclick="showView('dashboard',this)">
+            Dashboard
+        </button>
+
+        <button class="side-link" onclick="showView('clientes',this)">
+            Clientes
+        </button>
+
+        <button class="side-link" onclick="showView('pedidos',this)">
+            Pedidos
+        </button>
+
+        <button class="side-link" onclick="showView('pagos',this)">
+            Pagos
+        </button>
+
+        <button class="side-link" onclick="showView('cuenta',this)">
+            Cuenta corriente
+        </button>
+
+        <button class="side-link danger" onclick="logout()">
+            Salir
+        </button>
+    </nav>
+</aside>
+
+<main class="app-main">
+
+    <!-- DASHBOARD -->
+    <section id="view-dashboard" class="view">
+
+        <div class="app-head">
+            <div>
+                <p class="section-title-small">Panel de control</p>
+                <h1>Dashboard</h1>
+            </div>
+
+            <button class="btn" onclick="seedDemo()">
+                Cargar datos demo
+            </button>
+        </div>
+
+        <div class="kpi-grid">
+
+            <div class="kpi">
+                <span>Clientes</span>
+                <strong id="kpiClientes">0</strong>
+            </div>
+
+            <div class="kpi">
+                <span>Pedidos abiertos</span>
+                <strong id="kpiPedidos">0</strong>
+            </div>
+
+            <div class="kpi">
+                <span>Saldo pendiente</span>
+                <strong id="kpiSaldo">Q0.00</strong>
+            </div>
+
+            <div class="kpi">
+                <span>Pagos recibidos</span>
+                <strong id="kpiPagos">Q0.00</strong>
+            </div>
+
+        </div>
+
+        <div class="panel">
+            <h2>Pedidos recientes</h2>
+
+            <div class="table-wrap">
+                <table id="tablaRecientes"></table>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- CLIENTES -->
+    <section id="view-clientes" class="view hidden">
+
+        <div class="app-head">
+            <div>
+                <p class="section-title-small">Gestión</p>
+                <h1>Clientes</h1>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Nuevo cliente</h2>
+
+            <div class="form-grid">
+                <input id="clienteNombre" placeholder="Nombre / Empresa">
+                <input id="clienteNit" placeholder="NIT">
+                <input id="clienteTelefono" placeholder="Teléfono">
+                <input id="clienteCorreo" placeholder="Correo">
+                <input id="clienteDireccion" placeholder="Dirección">
+
+                <button class="btn-form" onclick="addCliente()">
+                    Guardar cliente
+                </button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Listado de clientes</h2>
+
+            <div class="table-wrap">
+                <table id="tablaClientes"></table>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- PEDIDOS -->
+    <section id="view-pedidos" class="view hidden">
+
+        <div class="app-head">
+            <div>
+                <p class="section-title-small">Control</p>
+                <h1>Pedidos</h1>
+            </div>
+        </div>
+
+        <div class="panel">
+
+            <h2>Nuevo pedido</h2>
+
+            <div class="form-grid">
+
+                <select id="pedidoCliente"></select>
+
+                <input id="pedidoProducto"
+                       placeholder="Producto / descripción">
+
+                <input id="pedidoCantidad"
+                       type="number"
+                       placeholder="Cantidad">
+
+                <input id="pedidoTotal"
+                       type="number"
+                       placeholder="Total Q">
+
+                <select id="pedidoEstado">
+                    <option>Nuevo</option>
+                    <option>En proceso</option>
+                    <option>Pendiente de pago</option>
+                    <option>Entregado</option>
+                    <option>Cancelado</option>
+                </select>
+
+                <button class="btn-form"
+                        onclick="addPedido()">
+                    Guardar pedido
+                </button>
+
+            </div>
+
+        </div>
+
+        <div class="panel">
+            <h2>Listado de pedidos</h2>
+
+            <div class="table-wrap">
+                <table id="tablaPedidos"></table>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- PAGOS -->
+    <section id="view-pagos" class="view hidden">
+
+        <div class="app-head">
+            <div>
+                <p class="section-title-small">Cuenta</p>
+                <h1>Pagos</h1>
+            </div>
+        </div>
+
+        <div class="panel">
+
+            <h2>Registrar pago</h2>
+
+            <div class="form-grid">
+
+                <select id="pagoCliente"></select>
+
+                <select id="pagoPedido"></select>
+
+                <input id="pagoMonto"
+                       type="number"
+                       placeholder="Monto Q">
+
+                <input id="pagoMetodo"
+                       placeholder="Método">
+
+                <input id="pagoReferencia"
+                       placeholder="Referencia">
+
+                <button class="btn-form"
+                        onclick="addPago()">
+                    Guardar pago
+                </button>
+
+            </div>
+
+        </div>
+
+        <div class="panel">
+
+            <h2>Historial de pagos</h2>
+
+            <div class="table-wrap">
+                <table id="tablaPagos"></table>
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- CUENTA -->
+    <section id="view-cuenta" class="view hidden">
+
+        <div class="app-head">
+            <div>
+                <p class="section-title-small">Finanzas</p>
+                <h1>Cuenta corriente</h1>
+            </div>
+        </div>
+
+        <div class="panel">
+
+            <h2>Saldos por cliente</h2>
+
+            <div class="table-wrap">
+                <table id="tablaCuenta"></table>
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+<script src="app.js"></script>
+
+</body>
+</html>
