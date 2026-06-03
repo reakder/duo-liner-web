@@ -23,6 +23,17 @@ async function cargarMongoDB() {
 }
 function saveDB(db){localStorage.setItem(KEY,JSON.stringify(db))}function money(n){return"Q"+Number(n||0).toLocaleString("es-GT",{minimumFractionDigits:2,maximumFractionDigits:2})}function todayISO(){return new Date().toISOString().slice(0,10)}function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}function daysSince(dateStr){const start=new Date(dateStr+"T00:00:00");return Math.max(0,Math.floor((new Date()-start)/86400000))}function login(){const user=document.getElementById("user")?.value.trim(),pass=document.getElementById("pass")?.value.trim();if(user==="admin"&&pass==="1234"){localStorage.setItem("duoliner_session","ok");location.href="dashboard.html"}else{const error=document.getElementById("error");if(error)error.textContent="Usuario o contraseña incorrectos."}}function checkAuth(){if(location.pathname.includes("dashboard")&&localStorage.getItem("duoliner_session")!=="ok")location.href="login.html"}function logout(){localStorage.removeItem("duoliner_session");location.href="login.html"}function showView(name,button){document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));const view=document.getElementById("view-"+name);if(view)view.classList.remove("hidden");document.querySelectorAll(".side-link").forEach(b=>b.classList.remove("active"));if(button)button.classList.add("active");renderAll()}function clienteName(id){const db=getDB();return(db.clientes.find(c=>c.id===id)||{}).nombre||"Sin cliente"}function pedidoName(id){const db=getDB(),p=db.pedidos.find(x=>x.id===id);return p?`${p.producto} - ${money(p.total)}`:"Sin pedido"}function pagosDePedido(pedidoId){const db=getDB();return db.pagos.filter(p=>p.pedido_id===pedidoId).reduce((a,p)=>a+Number(p.monto||0),0)}function saldoPedido(p){return Number(p.total||0)-pagosDePedido(p.id)}function saldoCliente(clienteId){const db=getDB();return db.pedidos.filter(p=>p.cliente_id===clienteId&&p.estado!=="Cancelado").reduce((a,p)=>a+saldoPedido(p),0)}async function addCliente(){
   const nombre = document.getElementById("clienteNombre").value.trim();
+  const nit = document.getElementById("clienteNit").value.trim();
+
+const existe = getDB().clientes.some(c =>
+  (c.nit && c.nit === nit) ||
+  c.nombre.toLowerCase() === nombre.toLowerCase()
+);
+
+if (existe) {
+  alert("Este cliente ya existe en la base de datos.");
+  return;
+}
 
   if(!nombre){
     return alert("Ingresa el nombre del cliente.");
@@ -30,7 +41,7 @@ function saveDB(db){localStorage.setItem(KEY,JSON.stringify(db))}function money(
 
   const data = {
     nombre,
-    nit: document.getElementById("clienteNit").value.trim(),
+    nit: nit,
     telefono: document.getElementById("clienteTelefono").value.trim(),
     correo: document.getElementById("clienteCorreo").value.trim(),
     direccion: document.getElementById("clienteDireccion").value.trim(),
