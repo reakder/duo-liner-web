@@ -1,55 +1,115 @@
-const BACKEND_URL="https://duo-liner-backend.onrender.com";
+const BACKEND_URL = "https://duo-liner-backend.onrender.com";
 
-const menuToggle=document.getElementById("menuToggle"),navLinks=document.getElementById("navLinks"),cursor=document.getElementById("inkCursor"),stamp=document.getElementById("stampObject");
-if(menuToggle&&navLinks){menuToggle.addEventListener("click",()=>navLinks.classList.toggle("open"));navLinks.querySelectorAll("a").forEach(a=>a.addEventListener("click",()=>navLinks.classList.remove("open")))}
-if(cursor){document.addEventListener("mousemove",e=>{cursor.style.left=e.clientX+"px";cursor.style.top=e.clientY+"px"})}
-if(stamp){document.addEventListener("mousemove",e=>{const x=(e.clientX/window.innerWidth-.5)*12,y=(e.clientY/window.innerHeight-.5)*-10;stamp.style.rotate=`${y}deg ${x}deg`})}
+const menuToggle = document.getElementById("menuToggle");
+const navLinks = document.getElementById("navLinks");
+const cursor = document.getElementById("inkCursor");
+const stamp = document.getElementById("stampObject");
 
-async function apiGet(path){const r=await fetch(`${BACKEND_URL}${path}`);if(!r.ok)throw new Error(path);return r.json()}
-async function apiPost(path,data){const r=await fetch(`${BACKEND_URL}${path}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});if(!r.ok)throw new Error(path);return r.json()}
-async function apiPut(path,data){const r=await fetch(`${BACKEND_URL}${path}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});if(!r.ok)throw new Error(path);return r.json()}
-async function apiDelete(path){const r=await fetch(`${BACKEND_URL}${path}`,{method:"DELETE"});if(!r.ok)throw new Error(path);return r.json()}
+if (menuToggle && navLinks) {
+  menuToggle.addEventListener("click", () => {
+    navLinks.classList.toggle("open");
+  });
 
-const quoteForm=document.getElementById("quoteForm");
-if(quoteForm){quoteForm.addEventListener("submit",async e=>{e.preventDefault();const name=document.getElementById("qName").value.trim(),company=document.getElementById("qCompany").value.trim(),phone=document.getElementById("qPhone").value.trim(),product=document.getElementById("qProduct").value,message=document.getElementById("qMessage").value.trim();if(!name||!phone)return alert("Por favor ingresa nombre y teléfono.");try{await apiPost("/cotizaciones",{nombre:name,empresa:company,telefono:phone,producto,mensaje:message,origen:"web-duo-liner",fecha_web:new Date().toISOString()});alert("Cotización enviada correctamente.");const text=`Hola DUO-LINER, deseo solicitar una cotización.%0A%0ANombre: ${encodeURIComponent(name)}%0AEmpresa: ${encodeURIComponent(company)}%0ATeléfono: ${encodeURIComponent(phone)}%0AProducto: ${encodeURIComponent(product)}%0ADetalle: ${encodeURIComponent(message)}`;window.open(`https://wa.me/50258544448?text=${text}`,"_blank");quoteForm.reset()}catch(error){console.error(error);alert("No fue posible enviar la cotización.")}})}
+  navLinks.querySelectorAll("a").forEach((a) => {
+    a.addEventListener("click", () => {
+      navLinks.classList.remove("open");
+    });
+  });
+}
 
-let mongoDB={clientes:[],pedidos:[],pagos:[]};
-function getDB(){return mongoDB}
-function money(n){return"Q"+Number(n||0).toLocaleString("es-GT",{minimumFractionDigits:2,maximumFractionDigits:2})}
-function todayISO(){return new Date().toISOString().slice(0,10)}
-function daysSince(dateStr){if(!dateStr)return 0;const start=new Date(String(dateStr).slice(0,10)+"T00:00:00");return Math.max(0,Math.floor((new Date()-start)/86400000))}
-function pedidoDescripcion(p){return p.descripcion||p.producto||"-"}
-function pedidoTotal(p){return Number(p.total_factura ?? p.total ?? 0)}
-function pedidoPrecio(p){return Number(p.precio ?? 0)}
+if (cursor) {
+  document.addEventListener("mousemove", (e) => {
+    cursor.style.left = e.clientX + "px";
+    cursor.style.top = e.clientY + "px";
+  });
+}
 
-async function cargarMongoDB(){try{const[clientes,pedidos,pagos]=await Promise.all([apiGet("/clientes"),apiGet("/pedidos"),apiGet("/pagos")]);mongoDB={clientes,pedidos,pagos};renderAll()}catch(error){console.error("Error cargando MongoDB:",error)}}
+if (stamp) {
+  document.addEventListener("mousemove", (e) => {
+    const x = (e.clientX / window.innerWidth - 0.5) * 12;
+    const y = (e.clientY / window.innerHeight - 0.5) * -10;
+    stamp.style.rotate = `${y}deg ${x}deg`;
+  });
+}
 
-function login(){const user=document.getElementById("user")?.value.trim(),pass=document.getElementById("pass")?.value.trim();if(user==="admin"&&pass==="1234"){localStorage.setItem("duoliner_session","ok");location.href="dashboard.html"}else{const error=document.getElementById("error");if(error)error.textContent="Usuario o contraseña incorrectos."}}
-function checkAuth(){if(location.pathname.includes("dashboard")&&localStorage.getItem("duoliner_session")!=="ok")location.href="login.html"}
-function logout(){localStorage.removeItem("duoliner_session");location.href="login.html"}
-function showView(name,button){document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));const view=document.getElementById("view-"+name);if(view)view.classList.remove("hidden");document.querySelectorAll(".side-link").forEach(b=>b.classList.remove("active"));if(button)button.classList.add("active");renderAll()}
+const reveals = document.querySelectorAll(".reveal");
 
-function clienteName(id){const db=getDB();return(db.clientes.find(c=>c.id===id)||{}).nombre||"Sin cliente"}
-function clienteDireccion(id){const db=getDB();return(db.clientes.find(c=>c.id===id)||{}).direccion||"-"}
-function pedidoName(id){const db=getDB(),p=db.pedidos.find(x=>x.id===id);return p?`${pedidoDescripcion(p)} - ${money(pedidoTotal(p))}`:"Sin pedido"}
-function pagosDePedido(pedidoId){const db=getDB();return db.pagos.filter(p=>p.pedido_id===pedidoId).reduce((a,p)=>a+Number(p.monto||0),0)}
-function saldoPedido(p){return pedidoTotal(p)-pagosDePedido(p.id)}
-function saldoCliente(clienteId){const db=getDB();return db.pedidos.filter(p=>p.cliente_id===clienteId&&p.estado!=="Cancelado").reduce((a,p)=>a+saldoPedido(p),0)}
+if ("IntersectionObserver" in window) {
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+          entry.target.classList.add("show");
+        }
+      });
+    },
+    { threshold: 0.12 }
+  );
 
-async function addCliente(){const nombre=document.getElementById("clienteNombre").value.trim();if(!nombre)return alert("Ingresa el nombre del cliente.");const nit=document.getElementById("clienteNit").value.trim();const existe=getDB().clientes.some(c=>(nit&&c.nit===nit)||(c.nombre||"").toLowerCase()===nombre.toLowerCase());if(existe)return alert("Este cliente ya existe en la base de datos.");try{await apiPost("/clientes",{nombre,nit,telefono:document.getElementById("clienteTelefono").value.trim(),correo:document.getElementById("clienteCorreo").value.trim(),direccion:document.getElementById("clienteDireccion").value.trim(),fecha:todayISO()});["clienteNombre","clienteNit","clienteTelefono","clienteCorreo","clienteDireccion"].forEach(id=>document.getElementById(id).value="");await cargarMongoDB();alert("Cliente guardado en MongoDB.")}catch(error){console.error(error);alert("No se pudo guardar el cliente.")}}
-async function deleteCliente(id){if(!confirm("¿Eliminar cliente? También se eliminarán sus pedidos y pagos."))return;try{await apiDelete(`/clientes/${id}`);await cargarMongoDB()}catch(error){console.error(error);alert("No se pudo eliminar el cliente.")}}
+  reveals.forEach((item) => observer.observe(item));
+} else {
+  reveals.forEach((item) => {
+    item.classList.add("visible");
+    item.classList.add("show");
+  });
+}
 
-async function addPedido(){const cliente_id=document.getElementById("pedidoCliente").value;if(!cliente_id)return alert("Primero crea un cliente.");const descripcion=document.getElementById("pedidoDescripcion").value.trim();if(!descripcion)return alert("Ingresa la descripción.");const cantidad=Number(document.getElementById("pedidoCantidad").value||0),precio=Number(document.getElementById("pedidoPrecio").value||0);let total_factura=Number(document.getElementById("pedidoTotalFactura").value||0);if(!total_factura&&cantidad&&precio)total_factura=cantidad*precio;try{await apiPost("/pedidos",{cliente_id,fecha:document.getElementById("pedidoFecha").value||todayISO(),cantidad,descripcion,producto:descripcion,precio,total_factura,total:total_factura,estado:document.getElementById("pedidoEstado").value});["pedidoFecha","pedidoCantidad","pedidoDescripcion","pedidoPrecio","pedidoTotalFactura"].forEach(id=>document.getElementById(id).value="");await cargarMongoDB();alert("Pedido guardado en MongoDB.")}catch(error){console.error(error);alert("No se pudo guardar el pedido.")}}
-async function updateEstado(id,estado){try{await apiPut(`/pedidos/${id}`,{estado});await cargarMongoDB()}catch(error){console.error(error);alert("No se pudo actualizar el estado.")}}
-async function deletePedido(id){if(!confirm("¿Eliminar pedido?"))return;try{await apiDelete(`/pedidos/${id}`);await cargarMongoDB()}catch(error){console.error(error);alert("No se pudo eliminar el pedido.")}}
+const quoteForm = document.getElementById("quoteForm");
 
-async function addPago(){const cliente_id=document.getElementById("pagoCliente").value,pedido_id=document.getElementById("pagoPedido").value,monto=Number(document.getElementById("pagoMonto").value||0);if(!cliente_id||!pedido_id||monto<=0)return alert("Selecciona cliente, pedido y monto.");try{await apiPost("/pagos",{cliente_id,pedido_id,fecha:todayISO(),monto,metodo:document.getElementById("pagoMetodo").value.trim(),referencia:document.getElementById("pagoReferencia").value.trim()});["pagoMonto","pagoMetodo","pagoReferencia"].forEach(id=>document.getElementById(id).value="");await cargarMongoDB();alert("Pago guardado en MongoDB.")}catch(error){console.error(error);alert("No se pudo guardar el pago.")}}
-async function deletePago(id){if(!confirm("¿Eliminar pago?"))return;try{await apiDelete(`/pagos/${id}`);await cargarMongoDB()}catch(error){console.error(error);alert("No se pudo eliminar el pago.")}}
+if (quoteForm) {
+  quoteForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-function renderSelects(){const db=getDB(),clienteOptions=db.clientes.map(c=>`<option value="${c.id}">${c.nombre}</option>`).join("");["pedidoCliente","pagoCliente"].forEach(id=>{const el=document.getElementById(id);if(el){const old=el.value;el.innerHTML=clienteOptions||'<option value="">Sin clientes</option>';if(old)el.value=old}});const pagoCliente=document.getElementById("pagoCliente"),clienteId=pagoCliente?pagoCliente.value:"",pedidos=db.pedidos.filter(p=>!clienteId||p.cliente_id===clienteId),pedidoOptions=pedidos.map(p=>`<option value="${p.id}">${pedidoDescripcion(p)} - saldo ${money(saldoPedido(p))}</option>`).join(""),pagoPedido=document.getElementById("pagoPedido");if(pagoPedido){const old=pagoPedido.value;pagoPedido.innerHTML=pedidoOptions||'<option value="">Sin pedidos</option>';if(old)pagoPedido.value=old}if(pagoCliente&&!pagoCliente.dataset.bound){pagoCliente.dataset.bound="1";pagoCliente.addEventListener("change",renderSelects)}}
+    const name = document.getElementById("qName")?.value.trim() || "";
+    const company = document.getElementById("qCompany")?.value.trim() || "";
+    const phone = document.getElementById("qPhone")?.value.trim() || "";
+    const product = document.getElementById("qProduct")?.value || "";
+    const message = document.getElementById("qMessage")?.value.trim() || "";
 
-function renderTables(){const db=getDB(),tablaClientes=document.getElementById("tablaClientes");if(tablaClientes)tablaClientes.innerHTML=`<tr><th>Cliente</th><th>NIT</th><th>Teléfono</th><th>Correo</th><th>Dirección</th><th>Saldo</th><th></th></tr>${db.clientes.map(c=>`<tr><td>${c.nombre}</td><td>${c.nit||"-"}</td><td>${c.telefono||"-"}</td><td>${c.correo||"-"}</td><td>${c.direccion||"-"}</td><td>${money(saldoCliente(c.id))}</td><td><button class="small-btn danger-btn" onclick="deleteCliente('${c.id}')">Eliminar</button></td></tr>`).join("")}`;const pedidosRows=db.pedidos.map(p=>`<tr><td>${String(p.fecha||"").slice(0,10)}</td><td>${p.cantidad||0}</td><td>${pedidoDescripcion(p)}</td><td>${money(pedidoPrecio(p))}</td><td>${money(pedidoTotal(p))}</td><td>${clienteName(p.cliente_id)}</td><td>${clienteDireccion(p.cliente_id)}</td><td>${money(saldoPedido(p))}</td><td><select onchange="updateEstado('${p.id}', this.value)">${["Nuevo","En proceso","Pendiente de pago","Entregado","Cancelado"].map(e=>`<option ${p.estado===e?"selected":""}>${e}</option>`).join("")}</select></td><td><button class="small-btn danger-btn" onclick="deletePedido('${p.id}')">Eliminar</button></td></tr>`).join("");const tablaPedidos=document.getElementById("tablaPedidos");if(tablaPedidos)tablaPedidos.innerHTML=`<tr><th>Fecha</th><th>Cantidad</th><th>Descripción</th><th>Precio</th><th>Total factura</th><th>Cliente</th><th>Dirección</th><th>Saldo</th><th>Estado</th><th></th></tr>${pedidosRows}`;const tablaRecientes=document.getElementById("tablaRecientes");if(tablaRecientes)tablaRecientes.innerHTML=`<tr><th>Fecha</th><th>Cantidad</th><th>Descripción</th><th>Total factura</th><th>Cliente</th><th>Estado</th></tr>${db.pedidos.slice(0,8).map(p=>`<tr><td>${String(p.fecha||"").slice(0,10)}</td><td>${p.cantidad||0}</td><td>${pedidoDescripcion(p)}</td><td>${money(pedidoTotal(p))}</td><td>${clienteName(p.cliente_id)}</td><td><span class="badge-state">${p.estado}</span></td></tr>`).join("")}`;const tablaPagos=document.getElementById("tablaPagos");if(tablaPagos)tablaPagos.innerHTML=`<tr><th>Fecha</th><th>Cliente</th><th>Pedido</th><th>Monto</th><th>Método</th><th>Referencia</th><th></th></tr>${db.pagos.map(p=>`<tr><td>${String(p.fecha||"").slice(0,10)}</td><td>${clienteName(p.cliente_id)}</td><td>${pedidoName(p.pedido_id)}</td><td>${money(p.monto)}</td><td>${p.metodo||"-"}</td><td>${p.referencia||"-"}</td><td><button class="small-btn danger-btn" onclick="deletePago('${p.id}')">Eliminar</button></td></tr>`).join("")}`;const tablaCuenta=document.getElementById("tablaCuenta");if(tablaCuenta)tablaCuenta.innerHTML=`<tr><th>Cliente</th><th>Dirección</th><th>Pedidos</th><th>Total facturado</th><th>Pagado</th><th>Saldo</th></tr>${db.clientes.map(c=>{const pedidos=db.pedidos.filter(p=>p.cliente_id===c.id&&p.estado!=="Cancelado"),total=pedidos.reduce((a,p)=>a+pedidoTotal(p),0),pagado=db.pagos.filter(p=>p.cliente_id===c.id).reduce((a,p)=>a+Number(p.monto||0),0);return`<tr><td>${c.nombre}</td><td>${c.direccion||"-"}</td><td>${pedidos.length}</td><td>${money(total)}</td><td>${money(pagado)}</td><td><b>${money(total-pagado)}</b></td></tr>`}).join("")}`}
-function renderKPIs(){const db=getDB(),kpiClientes=document.getElementById("kpiClientes");if(!kpiClientes)return;const abiertos=db.pedidos.filter(p=>!["Entregado","Cancelado"].includes(p.estado)).length,saldo=db.pedidos.filter(p=>p.estado!=="Cancelado").reduce((a,p)=>a+saldoPedido(p),0),pagos=db.pagos.reduce((a,p)=>a+Number(p.monto||0),0);kpiClientes.textContent=db.clientes.length;document.getElementById("kpiPedidos").textContent=abiertos;document.getElementById("kpiSaldo").textContent=money(saldo);document.getElementById("kpiPagos").textContent=money(pagos)}
-function renderAll(){renderSelects();renderTables();renderKPIs()}
-async function seedDemo(){alert("Demo desactivada para evitar duplicados. Usa datos reales.")}
-checkAuth();document.addEventListener("DOMContentLoaded",()=>{if(location.pathname.includes("dashboard"))cargarMongoDB();else renderAll()});
+    if (!name || !phone) {
+      alert("Por favor ingresa nombre y teléfono.");
+      return;
+    }
+
+    const data = {
+      nombre: name,
+      empresa: company,
+      telefono: phone,
+      producto: product,
+      mensaje: message,
+      origen: "web-duo-liner",
+      fecha_web: new Date().toISOString()
+    };
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/cotizaciones`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        throw new Error("No se pudo guardar la cotización");
+      }
+
+      alert("Cotización enviada correctamente.");
+
+      const text =
+        `Hola DUO-LINER, deseo solicitar una cotización.%0A%0A` +
+        `Nombre: ${encodeURIComponent(name)}%0A` +
+        `Empresa: ${encodeURIComponent(company)}%0A` +
+        `Teléfono: ${encodeURIComponent(phone)}%0A` +
+        `Producto: ${encodeURIComponent(product)}%0A` +
+        `Detalle: ${encodeURIComponent(message)}`;
+
+      window.open(`https://wa.me/50258544448?text=${text}`, "_blank");
+      quoteForm.reset();
+    } catch (error) {
+      console.error(error);
+      alert("No fue posible enviar la cotización. Intente nuevamente.");
+    }
+  });
+}
