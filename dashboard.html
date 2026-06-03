@@ -67,6 +67,25 @@
         </select>
         <button class="btn-form" onclick="addPedido()">Guardar pedido</button>
       </div></div>
+      <div class="panel">
+        <h2>Filtros de pedidos</h2>
+        <div class="form-grid">
+          <input id="filtroClientePedido" placeholder="Buscar por cliente">
+          <input id="filtroFechaInicio" type="date">
+          <input id="filtroFechaFin" type="date">
+          <select id="filtroEstadoPedido">
+            <option value="">Todos los estados</option>
+            <option>Nuevo</option>
+            <option>En proceso</option>
+            <option>Pendiente de pago</option>
+            <option>Entregado</option>
+            <option>Cancelado</option>
+          </select>
+          <button class="btn-form" onclick="renderAll()">Aplicar filtros</button>
+          <button class="btn-form" onclick="limpiarFiltrosPedidos()">Limpiar filtros</button>
+        </div>
+        <p id="contadorPedidos" class="section-label" style="margin-top:14px;">Mostrando 0 de 0 pedidos</p>
+      </div>
       <div class="panel"><h2>Listado de pedidos</h2><div class="table-wrap"><table id="tablaPedidos"></table></div></div>
     </section>
 
