@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Importar pagos | DUO-LINER</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    body{font-family:Inter,Arial,sans-serif;background:#f4f2ec;margin:0;color:#111}
+    .wrap{max-width:980px;margin:40px auto;background:#fff;border:1px solid #ddd;padding:28px}
+    h1{margin:0 0 10px;font-size:34px}
+    p{line-height:1.5}
+    input,button{font:inherit;padding:14px;border:1px solid #ccc}
+    button{background:#111;color:#fff;font-weight:800;cursor:pointer;text-transform:uppercase;letter-spacing:.06em}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    .row{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0}
+    .box{background:#fafafa;border:1px solid #ddd;padding:14px;margin:12px 0}
+    pre{background:#111;color:#0f0;padding:16px;white-space:pre-wrap;max-height:380px;overflow:auto}
+    .ok{color:#078b43;font-weight:800}
+    .bad{color:#b00020;font-weight:800}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Importar pagos DUO-LINER</h1>
+    <p>Este importador lee el Excel de pagos, busca el pedido correspondiente en MongoDB y crea pagos automáticamente para las filas marcadas como <b>cancelado</b>.</p>
+
+    <div class="box">
+      <b>Reglas:</b>
+      <ul>
+        <li>Solo importa filas donde <b>status = cancelado</b>.</li>
+        <li>El pago se crea por el valor de <b>TOTAL FACTURA</b>.</li>
+        <li>Relaciona por cliente, total, cantidad y descripción.</li>
+        <li>Evita duplicados si ya existe un pago con el mismo pedido, monto y referencia.</li>
+      </ul>
+    </div>
+
+    <div class="row">
+      <input type="file" id="excelFile" accept=".xlsx,.xls">
+      <button id="btnAnalizar" onclick="analizar()">Analizar Excel</button>
+      <button id="btnImportar" onclick="importar()" disabled>Importar pagos</button>
+    </div>
+
+    <div id="resumen" class="box">Selecciona el Excel de pagos para analizarlo.</div>
+    <pre id="log"></pre>
+  </div>
+
+<script>
+const BACKEND_URL = "https://duo-liner-backend.onrender.com";
+
+let filasExcel = [];
+let clientes = [];
+let pedidos = [];
+let pagos = [];
+let candidatos = [];
+
+function log(msg){
+  const el=document.getElementById("log");
+  el.textContent += msg + "\\n";
+  el.scrollTop = el.scrollHeight;
+}
+
+function norm(v){
+  return String(v || "")
+    .toLowerCase()
+    .normalize("NFD").replace(/[\\u0300-\\u036f]/g,"")
+    .replace(/sociedad anonima|s\\.a\\.|sa|,|\\.|-/g," ")
+    .replace(/\\s+/g," ")
+    .trim();
+}
+
+function moneyNum(v){
+  if(typeof v === "number") return v;
+  let s = String(v || "").replace(/Q/gi,"").replace(/,/g,"").trim();
+  return Number(s || 0);
+}
+
+function excelDateToISO(v){
+  if(!v) return "";
+  if(v instanceof Date) return v.toISOString().slice(0,10);
+  if(typeof v === "number"){
+    const parsed = XLSX.SSF.parse_date_code(v);
+    if(parsed){
+      const y = parsed.y;
+      const m = String(parsed.m).padStart(2,"0");
+      const d = String(parsed.d).padStart(2,"0");
+      return `${y}-${m}-${d}`;
+    }
+  }
+  const s = String(v).trim();
+  const m = s.match(/(\\d{1,2})[\\/\\-](\\d{1,2})[\\/\\-](\\d{2,4})/);
+  if(m){
+    let y = Number(m[3]);
+    if(y < 100) y += 2000;
+    return `${y}-${String(m[2]).padStart(2,"0")}-${String(m[1]).padStart(2,"0")}`;
+  }
+  return s.slice(0,10);
+}
+
+function fechaPagoDesdeReferencia(ref, fallback){
+  const s = String(ref || "");
+  const m = s.match(/(\\d{1,2})[\\/\\-](\\d{1,2})[\\/\\-](\\d{2,4})/);
+  if(m){
+    let y = Number(m[3]);
+    if(y < 100) y += 2000;
+    return `${y}-${String(m[2]).padStart(2,"0")}-${String(m[1]).padStart(2,"0")}`;
+  }
+  return fallback || new Date().toISOString().slice(0,10);
+}
+
+function metodoDesdeTexto(txt){
+  const s = norm(txt);
+  if(s.includes("cheque")) return "Cheque";
+  if(s.includes("contado") || s.includes("efectivo")) return "Efectivo";
+  if(s.includes("trans") || s.includes("transfer") || s.includes("bam") || s.includes("banrural") || s.includes("bi ")) return "Transferencia";
+  return "No especificado";
+}
+
+function clienteAlias(nombreExcel){
+  const n = norm(nombreExcel);
+  if(n.includes("prodiva")) return "prodiva";
+  if(n.includes("farmaya")) return "farmaya";
+  if(n.includes("roswer")) return "roswer";
+  if(n.includes("scentia")) return "scentia";
+  if(n.includes("tecniplast")) return "tecniplast";
+  if(n.includes("wendy")) return "wendy";
+  return n;
+}
+
+function clienteMatch(nombreExcel){
+  const alias = clienteAlias(nombreExcel);
+  return clientes.find(c => norm(c.nombre).includes(alias) || alias.includes(norm(c.nombre)));
+}
+
+function descripcionScore(a,b){
+  const wa = norm(a).split(" ").filter(x=>x.length>2);
+  const nb = norm(b);
+  if(!wa.length) return 0;
+  let hits = 0;
+  wa.forEach(w => { if(nb.includes(w)) hits++; });
+  return hits / wa.length;
+}
+
+function pedidoMatch(row, cliente){
+  const total = moneyNum(row["TOTAL FACTURA"]);
+  const cantidad = Number(row["CANTIDAD"] || 0);
+  const desc = row["DESCRIPCION"] || "";
+
+  const posibles = pedidos
+    .filter(p => p.cliente_id === cliente.id)
+    .filter(p => Math.abs(Number((p.total_factura ?? p.total) || 0) - total) < 0.05)
+    .filter(p => !cantidad || Number(p.cantidad || 0) === cantidad)
+    .map(p => ({ pedido:p, score: descripcionScore(desc, p.descripcion || p.producto || "") }))
+    .sort((a,b) => b.score - a.score);
+
+  if(posibles.length && posibles[0].score >= 0.25) return posibles[0].pedido;
+
+  // Respaldo: si cliente + total + cantidad hacen match único, usarlo aunque la descripción sea diferente
+  const respaldo = pedidos
+    .filter(p => p.cliente_id === cliente.id)
+    .filter(p => Math.abs(Number((p.total_factura ?? p.total) || 0) - total) < 0.05)
+    .filter(p => !cantidad || Number(p.cantidad || 0) === cantidad);
+
+  return respaldo.length === 1 ? respaldo[0] : null;
+}
+
+async function cargarBackend(){
+  [clientes,pedidos,pagos] = await Promise.all([
+    fetch(`${BACKEND_URL}/clientes`).then(r=>r.json()),
+    fetch(`${BACKEND_URL}/pedidos`).then(r=>r.json()),
+    fetch(`${BACKEND_URL}/pagos`).then(r=>r.json())
+  ]);
+}
+
+async function analizar(){
+  document.getElementById("log").textContent="";
+  document.getElementById("btnImportar").disabled=true;
+  candidatos = [];
+
+  const file = document.getElementById("excelFile").files[0];
+  if(!file){ alert("Selecciona un Excel."); return; }
+
+  log("Leyendo Excel...");
+  const data = await file.arrayBuffer();
+  const workbook = XLSX.read(data);
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  filasExcel = XLSX.utils.sheet_to_json(sheet, { defval:"" });
+
+  log(`Filas leídas: ${filasExcel.length}`);
+  log("Cargando clientes, pedidos y pagos desde MongoDB...");
+  await cargarBackend();
+
+  let cancelados = 0, sinCliente = 0, sinPedido = 0, duplicados = 0;
+
+  filasExcel.forEach((row, index) => {
+    const status = norm(row["status"] || row["STATUS"] || "");
+    if(!status.includes("cancelado")) return;
+
+    cancelados++;
+
+    const cliente = clienteMatch(row["CLIENTE"]);
+    if(!cliente){
+      sinCliente++;
+      log(`Fila ${index+2}: cliente no encontrado -> ${row["CLIENTE"]}`);
+      return;
+    }
+
+    const pedido = pedidoMatch(row, cliente);
+    if(!pedido){
+      sinPedido++;
+      log(`Fila ${index+2}: pedido no encontrado -> ${row["CLIENTE"]} | ${row["TOTAL FACTURA"]} | ${row["DESCRIPCION"]}`);
+      return;
+    }
+
+    const referencia = String(row["Columna2"] || row["REFERENCIA"] || row["referencia"] || row["status"] || "").trim();
+    const monto = moneyNum(row["TOTAL FACTURA"]);
+    const yaExiste = pagos.some(p =>
+      p.pedido_id === pedido.id &&
+      Math.abs(Number(p.monto || 0) - monto) < 0.05 &&
+      String(p.referencia || "").trim() === referencia
+    );
+
+    if(yaExiste){
+      duplicados++;
+      return;
+    }
+
+    candidatos.push({
+      cliente_id: cliente.id,
+      pedido_id: pedido.id,
+      fecha: fechaPagoDesdeReferencia(referencia, excelDateToISO(row["FECHA"])),
+      monto,
+      metodo: metodoDesdeTexto(referencia),
+      referencia,
+      origen: "importacion_excel_pagos"
+    });
+  });
+
+  document.getElementById("resumen").innerHTML = `
+    <b>Resumen:</b><br>
+    Filas del Excel: ${filasExcel.length}<br>
+    Cancelados detectados: ${cancelados}<br>
+    Listos para importar: <span class="ok">${candidatos.length}</span><br>
+    Duplicados omitidos: ${duplicados}<br>
+    Sin cliente: <span class="bad">${sinCliente}</span><br>
+    Sin pedido: <span class="bad">${sinPedido}</span>
+  `;
+
+  log("Análisis terminado.");
+  if(candidatos.length > 0){
+    document.getElementById("btnImportar").disabled=false;
+  }
+}
+
+async function importar(){
+  if(!candidatos.length){
+    alert("No hay pagos para importar.");
+    return;
+  }
+
+  if(!confirm(`Se importarán ${candidatos.length} pagos a MongoDB. ¿Continuar?`)) return;
+
+  document.getElementById("btnImportar").disabled=true;
+
+  let ok = 0, error = 0;
+
+  for(const pago of candidatos){
+    try{
+      const r = await fetch(`${BACKEND_URL}/pagos`,{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify(pago)
+      });
+
+      if(!r.ok) throw new Error("Error POST /pagos");
+      ok++;
+      log(`OK ${ok}: pago ${pago.monto} -> pedido ${pago.pedido_id}`);
+    }catch(e){
+      error++;
+      log(`ERROR: ${pago.monto} -> ${pago.referencia}`);
+    }
+  }
+
+  document.getElementById("resumen").innerHTML += `<br><br><b>Importación finalizada:</b><br><span class="ok">${ok} pagos importados</span><br><span class="bad">${error} errores</span>`;
+  alert(`Importación finalizada: ${ok} pagos importados, ${error} errores.`);
+}
+</script>
+</body>
+</html>
