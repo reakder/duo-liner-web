@@ -10,6 +10,13 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="app-body">
+  <div id="loadingOverlay" style="position:fixed;inset:0;background:rgba(244,242,236,.96);z-index:9999;display:flex;align-items:center;justify-content:center;font-family:Inter,Arial,sans-serif;">
+    <div style="background:#fff;border:1px solid #ddd;padding:28px 34px;box-shadow:8px 8px 0 #171717;max-width:420px;text-align:center;">
+      <strong style="display:block;font-size:22px;margin-bottom:8px;">Cargando informacion...</strong>
+      <span style="color:#555;">Conectando con MongoDB y preparando el dashboard.</span>
+    </div>
+  </div>
+
   <aside class="sidebar">
     <a href="index.html"><img src="assets/logo-duo-liner.png" class="side-logo" alt="DUO-LINER"></a>
     <nav>
