@@ -22,6 +22,7 @@
     <nav>
       <button class="side-link active" onclick="showView('dashboard', this)">Dashboard</button>
       <button class="side-link" onclick="showView('clientes', this)">Clientes</button>
+      <button class="side-link" onclick="showView('cotizaciones', this)">Cotizaciones</button>
       <button class="side-link" onclick="showView('pedidos', this)">Pedidos</button>
       <button class="side-link" onclick="showView('pagos', this)">Pagos</button>
       <button class="side-link" onclick="showView('cuenta', this)">Cuenta corriente</button>
@@ -54,6 +55,40 @@
         <button class="btn-form" onclick="addCliente()">Guardar cliente</button>
       </div></div>
       <div class="panel"><h2>Listado de clientes</h2><div class="table-wrap"><table id="tablaClientes"></table></div></div>
+    </section>
+
+
+    <section id="view-cotizaciones" class="view hidden">
+      <div class="app-head"><div><span class="section-label">Comercial</span><h1>Cotizaciones</h1></div></div>
+      <div class="panel">
+        <h2>Nueva cotización</h2>
+        <div class="form-grid">
+          <input id="cotCliente" placeholder="Nombre del cliente">
+          <input id="cotDireccion" placeholder="Dirección">
+          <input id="cotCantidad" type="number" placeholder="Cantidad">
+          <input id="cotDescripcion" placeholder="Descripción / Producto">
+          <input id="cotPrecio" type="number" step="0.01" placeholder="Precio unitario">
+          <input id="cotTotal" type="number" step="0.01" placeholder="Total" readonly>
+          <select id="cotIva"><option value="si">Precio incluye IVA</option><option value="no">Precio no incluye IVA</option></select>
+          <select id="cotEstado"><option>Pendiente</option><option>Enviada</option><option>Aprobada</option><option>Rechazada</option></select>
+          <input id="cotObservaciones" placeholder="Observaciones">
+          <button class="btn-form" onclick="addCotizacion()">Guardar cotización</button>
+        </div>
+        <p class="section-label" style="margin-top:14px;">Vigencia automática: 15 días</p>
+      </div>
+      <div class="panel">
+        <h2>Historial de cotizaciones</h2>
+        <div class="form-grid">
+          <input id="filtroCotCliente" placeholder="Buscar por cliente">
+          <input id="filtroCotFechaInicio" type="date">
+          <input id="filtroCotFechaFin" type="date">
+          <select id="filtroCotEstado"><option value="">Todos los estados</option><option>Pendiente</option><option>Enviada</option><option>Aprobada</option><option>Rechazada</option><option>Convertida a pedido</option></select>
+          <button class="btn-form" onclick="renderAll()">Aplicar filtros</button>
+          <button class="btn-form" onclick="limpiarFiltrosCotizaciones()">Limpiar filtros</button>
+        </div>
+        <p id="contadorCotizaciones" class="section-label" style="margin-top:14px;">Mostrando 0 de 0 cotizaciones</p>
+        <div class="table-wrap" style="margin-top:16px;"><table id="tablaCotizaciones"></table></div>
+      </div>
     </section>
 
     <section id="view-pedidos" class="view hidden">

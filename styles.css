@@ -429,3 +429,7 @@ button,
     white-space: normal;
   }
 }
+
+
+/* COTIZACIONES DUO-LINER */
+#tablaCotizaciones .small-btn{margin-right:6px;margin-bottom:6px}
