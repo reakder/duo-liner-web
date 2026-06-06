@@ -6,15 +6,8 @@ const cursor = document.getElementById("inkCursor");
 const stamp = document.getElementById("stampObject");
 
 if (menuToggle && navLinks) {
-  menuToggle.addEventListener("click", () => {
-    navLinks.classList.toggle("open");
-  });
-
-  navLinks.querySelectorAll("a").forEach((a) => {
-    a.addEventListener("click", () => {
-      navLinks.classList.remove("open");
-    });
-  });
+  menuToggle.addEventListener("click", () => navLinks.classList.toggle("open"));
+  navLinks.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => navLinks.classList.remove("open")));
 }
 
 if (cursor) {
@@ -33,20 +26,15 @@ if (stamp) {
 }
 
 const reveals = document.querySelectorAll(".reveal");
-
 if ("IntersectionObserver" in window) {
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("visible");
-          entry.target.classList.add("show");
-        }
-      });
-    },
-    { threshold: 0.12 }
-  );
-
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("visible");
+        entry.target.classList.add("show");
+      }
+    });
+  }, { threshold: 0.12 });
   reveals.forEach((item) => observer.observe(item));
 } else {
   reveals.forEach((item) => {
@@ -55,8 +43,21 @@ if ("IntersectionObserver" in window) {
   });
 }
 
-const quoteForm = document.getElementById("quoteForm");
+document.querySelectorAll(".product-quote").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const product = btn.dataset.product || "";
+    const select = document.getElementById("qProduct");
+    const msg = document.getElementById("qMessage");
+    if (select && product) {
+      [...select.options].forEach((opt) => {
+        if (opt.textContent.trim() === product.trim()) select.value = opt.textContent;
+      });
+    }
+    if (msg && product && !msg.value.trim()) msg.value = `Solicito cotización para ${product}.`;
+  });
+});
 
+const quoteForm = document.getElementById("quoteForm");
 if (quoteForm) {
   quoteForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -73,27 +74,24 @@ if (quoteForm) {
     }
 
     const data = {
-      nombre: name,
+      cliente: name,
       empresa: company,
       telefono: phone,
-      producto: product,
+      descripcion: product,
       mensaje: message,
       origen: "web-duo-liner",
-      fecha_web: new Date().toISOString()
+      fecha: new Date().toISOString().slice(0, 10),
+      estado: "Pendiente"
     };
 
     try {
       const response = await fetch(`${BACKEND_URL}/cotizaciones`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
       });
 
-      if (!response.ok) {
-        throw new Error("No se pudo guardar la cotización");
-      }
+      if (!response.ok) throw new Error("No se pudo guardar la cotización");
 
       alert("Cotización enviada correctamente.");
 
