@@ -110,3 +110,37 @@ td select{min-width:140px;min-height:40px;border-radius:10px;padding:8px 10px}
 }
 @media(max-width:480px){.app-main{padding:12px}.app-head h1{font-size:32px}.side-logo{width:150px}.side-link{font-size:12px}table{min-width:860px}}
 @media print{.sidebar,.btn-form,.small-btn,#loadingOverlay{display:none!important}body.app-body{display:block;background:#fff}.app-main{padding:0}.panel,.kpi{box-shadow:none;border:1px solid #999}}
+
+
+/* =====================================================
+   PAGOS ORDENADOS / FILTROS
+   ===================================================== */
+#view-pagos .panel:nth-of-type(2) {
+  border-left: 5px solid var(--admin-blue);
+}
+
+#contadorPagos {
+  white-space: normal;
+}
+
+#tablaResumenPagos {
+  min-width: 650px;
+}
+
+#tablaPagos th:first-child,
+#tablaPagos td:first-child {
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 1;
+}
+
+#tablaPagos th:first-child {
+  background: var(--admin-blue-soft);
+  z-index: 2;
+}
+
+#tablaPagos td:nth-child(5) {
+  color: var(--admin-blue);
+  font-weight: 900;
+}

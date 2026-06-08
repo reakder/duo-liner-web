@@ -795,8 +795,9 @@ function obtenerPagosFiltrados() {
   const filtroFin = document.getElementById("filtroPagoFechaFin")?.value || "";
   const filtroMetodo = (document.getElementById("filtroMetodoPago")?.value || "").toLowerCase().trim();
   const filtroReferencia = (document.getElementById("filtroReferenciaPago")?.value || "").toLowerCase().trim();
+  const orden = document.getElementById("ordenPagos")?.value || "fecha_desc";
 
-  return db.pagos.filter((p) => {
+  const filtrados = db.pagos.filter((p) => {
     const nombreCliente = clienteName(p.cliente_id).toLowerCase();
     const fechaPago = String(p.fecha || "").slice(0, 10);
     const metodoPago = String(p.metodo || "").toLowerCase();
@@ -805,17 +806,50 @@ function obtenerPagosFiltrados() {
     return (!filtroCliente || nombreCliente.includes(filtroCliente)) &&
       (!filtroInicio || fechaPago >= filtroInicio) &&
       (!filtroFin || fechaPago <= filtroFin) &&
-      (!filtroMetodo || metodoPago === filtroMetodo) &&
+      (!filtroMetodo || metodoPago.includes(filtroMetodo)) &&
       (!filtroReferencia || referenciaPago.includes(filtroReferencia));
   });
+
+  filtrados.sort((a, b) => {
+    const clienteA = clienteName(a.cliente_id).toLowerCase();
+    const clienteB = clienteName(b.cliente_id).toLowerCase();
+    const fechaA = String(a.fecha || "");
+    const fechaB = String(b.fecha || "");
+    const montoA = Number(a.monto || 0);
+    const montoB = Number(b.monto || 0);
+
+    if (orden === "cliente_asc") return clienteA.localeCompare(clienteB) || fechaB.localeCompare(fechaA);
+    if (orden === "cliente_desc") return clienteB.localeCompare(clienteA) || fechaB.localeCompare(fechaA);
+    if (orden === "fecha_asc") return fechaA.localeCompare(fechaB);
+    if (orden === "monto_desc") return montoB - montoA;
+    if (orden === "monto_asc") return montoA - montoB;
+    return fechaB.localeCompare(fechaA);
+  });
+
+  return filtrados;
 }
 
 function limpiarFiltrosPagos() {
-  ["filtroClientePago", "filtroPagoFechaInicio", "filtroPagoFechaFin", "filtroMetodoPago", "filtroReferenciaPago"].forEach((id) => {
+  ["filtroClientePago", "filtroPagoFechaInicio", "filtroPagoFechaFin", "filtroMetodoPago", "filtroReferenciaPago", "ordenPagos"].forEach((id) => {
     const el = document.getElementById(id);
-    if (el) el.value = "";
+    if (el) el.value = id === "ordenPagos" ? "fecha_desc" : "";
   });
   renderAll();
+}
+
+function resumenPagosPorCliente(pagosFiltrados) {
+  const resumen = {};
+  pagosFiltrados.forEach((p) => {
+    const cliente = clienteName(p.cliente_id);
+    if (!resumen[p.cliente_id]) {
+      resumen[p.cliente_id] = { cliente, cantidad: 0, total: 0, ultimo: "" };
+    }
+    resumen[p.cliente_id].cantidad += 1;
+    resumen[p.cliente_id].total += Number(p.monto || 0);
+    const fecha = String(p.fecha || "").slice(0, 10);
+    if (fecha > resumen[p.cliente_id].ultimo) resumen[p.cliente_id].ultimo = fecha;
+  });
+  return Object.values(resumen).sort((a, b) => a.cliente.localeCompare(b.cliente));
 }
 
 function ultimoPagoCliente(clienteId) {
@@ -1061,31 +1095,51 @@ function renderTables() {
       `).join("");
   }
 
-  const pagosFiltrados = typeof obtenerPagosFiltrados === "function" ? obtenerPagosFiltrados() : db.pagos;
+    const pagosFiltrados = typeof obtenerPagosFiltrados === "function" ? obtenerPagosFiltrados() : db.pagos;
   const contadorPagos = document.getElementById("contadorPagos");
   if (contadorPagos) {
-    contadorPagos.textContent = `Mostrando ${pagosFiltrados.length} de ${db.pagos.length} pagos`;
+    const totalFiltrado = pagosFiltrados.reduce((a, p) => a + Number(p.monto || 0), 0);
+    contadorPagos.textContent = `Mostrando ${pagosFiltrados.length} de ${db.pagos.length} pagos · Total filtrado: ${money(totalFiltrado)}`;
+  }
+
+  const tablaResumenPagos = document.getElementById("tablaResumenPagos");
+  if (tablaResumenPagos) {
+    const resumen = resumenPagosPorCliente(pagosFiltrados);
+    tablaResumenPagos.innerHTML =
+      `<tr><th>Cliente</th><th>Cantidad de pagos</th><th>Total pagado</th><th>Último pago</th></tr>` +
+      (resumen.length
+        ? resumen.map((r) => `
+          <tr>
+            <td><b>${r.cliente}</b></td>
+            <td>${r.cantidad}</td>
+            <td><b>${money(r.total)}</b></td>
+            <td>${r.ultimo || "-"}</td>
+          </tr>
+        `).join("")
+        : `<tr><td colspan="4">No hay pagos con estos filtros.</td></tr>`);
   }
 
   const tablaPagos = document.getElementById("tablaPagos");
   if (tablaPagos) {
     tablaPagos.innerHTML =
-      `<tr><th>Fecha</th><th>Días</th><th>Cliente</th><th>Pedido</th><th>Monto</th><th>Método</th><th>Referencia</th><th></th></tr>` +
-      pagosFiltrados.map((p) => `
-        <tr>
-          <td>${String(p.fecha || "").slice(0, 10)}</td>
-          <td>${daysSince(p.fecha)} días</td>
-          <td>${clienteName(p.cliente_id)}</td>
-          <td>${pedidoName(p.pedido_id)}</td>
-          <td>${money(p.monto)}</td>
-          <td>${p.metodo || "-"}</td>
-          <td>${p.referencia || "-"}</td>
-          <td><button class="small-btn danger-btn" onclick="deletePago('${p.id}')">Eliminar</button></td>
-        </tr>
-      `).join("");
+      `<tr><th>Cliente</th><th>Fecha</th><th>Días</th><th>Pedido</th><th>Monto</th><th>Método</th><th>Referencia</th><th></th></tr>` +
+      (pagosFiltrados.length
+        ? pagosFiltrados.map((p) => `
+          <tr>
+            <td><b>${clienteName(p.cliente_id)}</b></td>
+            <td>${String(p.fecha || "").slice(0, 10)}</td>
+            <td>${daysSince(p.fecha)} días</td>
+            <td>${pedidoName(p.pedido_id)}</td>
+            <td><b>${money(p.monto)}</b></td>
+            <td>${p.metodo || "-"}</td>
+            <td>${p.referencia || "-"}</td>
+            <td><button class="small-btn danger-btn" onclick="deletePago('${p.id}')">Eliminar</button></td>
+          </tr>
+        `).join("")
+        : `<tr><td colspan="8">No hay pagos con estos filtros.</td></tr>`);
   }
 
-  const tablaCuenta = document.getElementById("tablaCuenta");
+const tablaCuenta = document.getElementById("tablaCuenta");
   if (tablaCuenta) {
     let rows = `<tr><th>Cliente</th><th>Dirección</th><th>Pedidos</th><th>Total facturado</th><th>Pagado</th><th>Saldo</th><th>Último pago</th></tr>`;
 
@@ -1226,6 +1280,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "filtroFechaInicio",
     "filtroFechaFin",
     "filtroEstadoPedido",
+    "ordenPagos",
     "filtroClientePago",
     "filtroPagoFechaInicio",
     "filtroPagoFechaFin",
