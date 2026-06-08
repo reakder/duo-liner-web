@@ -31,7 +31,8 @@ let mongoDB = {
   clientes: [],
   pedidos: [],
   pagos: [],
-  cotizaciones: []
+  cotizaciones: [],
+  usuarios: []
 };
 
 function getDB() {
@@ -115,6 +116,71 @@ async function apiDelete(path) {
   return r.json();
 }
 
+
+function getToken(){
+  return localStorage.getItem("duoliner_token") || "";
+}
+
+function getCurrentUser(){
+  try{
+    return JSON.parse(localStorage.getItem("duoliner_user") || "{}");
+  }catch(e){
+    return {};
+  }
+}
+
+function authHeaders(){
+  const token = getToken();
+  return token ? {"Authorization": "Bearer " + token} : {};
+}
+
+async function secureApiGet(path){
+  const r = await fetch(`${BACKEND_URL}${path}`, {headers: authHeaders()});
+  if(!r.ok) throw new Error(path + " " + r.status);
+  return r.json();
+}
+
+async function secureApiPost(path, data){
+  const r = await fetch(`${BACKEND_URL}${path}`, {
+    method:"POST",
+    headers: {"Content-Type":"application/json", ...authHeaders()},
+    body: JSON.stringify(data)
+  });
+  if(!r.ok){
+    let msg = "Error " + r.status;
+    try{ const e = await r.json(); msg = e.detail || msg; }catch(_){}
+    throw new Error(msg);
+  }
+  return r.json();
+}
+
+async function secureApiPut(path, data){
+  const r = await fetch(`${BACKEND_URL}${path}`, {
+    method:"PUT",
+    headers: {"Content-Type":"application/json", ...authHeaders()},
+    body: JSON.stringify(data)
+  });
+  if(!r.ok){
+    let msg = "Error " + r.status;
+    try{ const e = await r.json(); msg = e.detail || msg; }catch(_){}
+    throw new Error(msg);
+  }
+  return r.json();
+}
+
+async function secureApiDelete(path){
+  const r = await fetch(`${BACKEND_URL}${path}`, {
+    method:"DELETE",
+    headers: authHeaders()
+  });
+  if(!r.ok){
+    let msg = "Error " + r.status;
+    try{ const e = await r.json(); msg = e.detail || msg; }catch(_){}
+    throw new Error(msg);
+  }
+  return r.json();
+}
+
 /* LANDING FORM */
 const quoteForm = document.getElementById("quoteForm");
 
@@ -176,11 +242,17 @@ async function cargarMongoDB() {
       apiGet("/cotizaciones")
     ]);
 
+    let usuarios = [];
+    if (getToken()) {
+      try { usuarios = await secureApiGet("/usuarios"); } catch (e) { usuarios = []; }
+    }
+
     mongoDB = {
       clientes,
       pedidos,
       pagos,
-      cotizaciones
+      cotizaciones,
+      usuarios
     };
 
     renderAll();
@@ -193,27 +265,50 @@ async function cargarMongoDB() {
 }
 
 /* AUTH */
-function login() {
+async function login() {
   const user = document.getElementById("user")?.value.trim();
   const pass = document.getElementById("pass")?.value.trim();
 
-  if (user === "admin" && pass === "1234") {
+  try {
+    const r = await fetch(`${BACKEND_URL}/auth/login`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({usuario: user, password: pass})
+    });
+
+    if (!r.ok) {
+      const error = document.getElementById("error");
+      if (error) error.textContent = "Usuario o contraseña incorrectos.";
+      return;
+    }
+
+    const data = await r.json();
     localStorage.setItem("duoliner_session", "ok");
+    localStorage.setItem("duoliner_token", data.access_token || "");
+    localStorage.setItem("duoliner_user", JSON.stringify({
+      usuario: data.usuario,
+      nombre: data.nombre,
+      rol: data.rol
+    }));
+
     location.href = "dashboard.html";
-  } else {
-    const error = document.getElementById("error");
-    if (error) error.textContent = "Usuario o contraseña incorrectos.";
+  } catch (error) {
+    console.error(error);
+    const errorEl = document.getElementById("error");
+    if (errorEl) errorEl.textContent = "No se pudo conectar con el servidor.";
   }
 }
 
 function checkAuth() {
-  if (location.pathname.includes("dashboard") && localStorage.getItem("duoliner_session") !== "ok") {
+  if (location.pathname.includes("dashboard") && !getToken()) {
     location.href = "login.html";
   }
 }
 
 function logout() {
   localStorage.removeItem("duoliner_session");
+  localStorage.removeItem("duoliner_token");
+  localStorage.removeItem("duoliner_user");
   location.href = "login.html";
 }
 
@@ -734,6 +829,103 @@ function toggleCuentaCliente(clienteId) {
   if (fila) fila.classList.toggle("hidden");
 }
 
+
+/* USUARIOS */
+async function addUsuario(){
+  const nombre = document.getElementById("usuarioNombre")?.value.trim() || "";
+  const usuario = document.getElementById("usuarioUsuario")?.value.trim().toLowerCase() || "";
+  const password = document.getElementById("usuarioPassword")?.value || "";
+  const rol = document.getElementById("usuarioRol")?.value || "usuario";
+  const activo = (document.getElementById("usuarioActivo")?.value || "true") === "true";
+
+  if(!usuario || !password){
+    return alert("Ingresa usuario y contraseña.");
+  }
+
+  if(password.length < 8){
+    return alert("La contraseña debe tener mínimo 8 caracteres.");
+  }
+
+  try{
+    await secureApiPost("/usuarios", {nombre, usuario, password, rol, activo});
+    ["usuarioNombre","usuarioUsuario","usuarioPassword"].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.value = "";
+    });
+    await cargarMongoDB();
+    alert("Usuario creado correctamente.");
+  }catch(error){
+    console.error(error);
+    alert(error.message || "No se pudo crear el usuario.");
+  }
+}
+
+async function updateUsuario(id, field, value){
+  try{
+    const data = {};
+    if(field === "rol") data.rol = value;
+    if(field === "activo") data.activo = value === "true";
+    await secureApiPut(`/usuarios/${id}`, data);
+    await cargarMongoDB();
+  }catch(error){
+    console.error(error);
+    alert(error.message || "No se pudo actualizar el usuario.");
+  }
+}
+
+async function resetUsuarioPassword(id){
+  const nueva = prompt("Nueva contraseña para este usuario (mínimo 8 caracteres):");
+  if(!nueva) return;
+  if(nueva.length < 8) return alert("La contraseña debe tener mínimo 8 caracteres.");
+
+  try{
+    await secureApiPut(`/usuarios/${id}`, {password: nueva});
+    alert("Contraseña actualizada.");
+  }catch(error){
+    console.error(error);
+    alert(error.message || "No se pudo actualizar la contraseña.");
+  }
+}
+
+async function deleteUsuario(id){
+  if(!confirm("¿Desactivar este usuario?")) return;
+  try{
+    await secureApiDelete(`/usuarios/${id}`);
+    await cargarMongoDB();
+  }catch(error){
+    console.error(error);
+    alert(error.message || "No se pudo desactivar el usuario.");
+  }
+}
+
+async function activarUsuario(id){
+  try{
+    await secureApiPut(`/usuarios/${id}/activar`, {});
+    await cargarMongoDB();
+  }catch(error){
+    console.error(error);
+    alert(error.message || "No se pudo activar el usuario.");
+  }
+}
+
+async function cambiarMiPassword(){
+  const actual = document.getElementById("miPasswordActual")?.value || "";
+  const nueva = document.getElementById("miPasswordNueva")?.value || "";
+
+  if(!actual || !nueva) return alert("Ingresa contraseña actual y nueva.");
+  if(nueva.length < 8) return alert("La nueva contraseña debe tener mínimo 8 caracteres.");
+
+  try{
+    await secureApiPut("/auth/cambiar-password", {actual, nueva});
+    document.getElementById("miPasswordActual").value = "";
+    document.getElementById("miPasswordNueva").value = "";
+    alert("Contraseña actualizada.");
+  }catch(error){
+    console.error(error);
+    alert(error.message || "No se pudo cambiar la contraseña.");
+  }
+}
+
 /* RENDER */
 function renderSelects() {
   const db = getDB();
@@ -957,6 +1149,46 @@ function renderTables() {
 
     tablaCuenta.innerHTML = rows;
   }
+
+  const tablaUsuarios = document.getElementById("tablaUsuarios");
+  if (tablaUsuarios) {
+    const current = getCurrentUser();
+    const isAdmin = current.rol === "admin";
+
+    if (!getToken()) {
+      tablaUsuarios.innerHTML = `<tr><td>Inicia sesión para ver usuarios.</td></tr>`;
+    } else if (!isAdmin) {
+      tablaUsuarios.innerHTML = `<tr><td>Solo administradores pueden administrar usuarios.</td></tr>`;
+    } else {
+      tablaUsuarios.innerHTML =
+        `<tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr>` +
+        (db.usuarios || []).map((u) => `
+          <tr>
+            <td><b>${u.usuario || "-"}</b></td>
+            <td>${u.nombre || "-"}</td>
+            <td>
+              <select onchange="updateUsuario('${u.id}', 'rol', this.value)">
+                <option value="usuario" ${u.rol === "usuario" ? "selected" : ""}>Usuario</option>
+                <option value="admin" ${u.rol === "admin" ? "selected" : ""}>Administrador</option>
+              </select>
+            </td>
+            <td>
+              <select onchange="updateUsuario('${u.id}', 'activo', this.value)">
+                <option value="true" ${u.activo !== false ? "selected" : ""}>Activo</option>
+                <option value="false" ${u.activo === false ? "selected" : ""}>Inactivo</option>
+              </select>
+            </td>
+            <td>
+              <button class="small-btn" onclick="resetUsuarioPassword('${u.id}')">Cambiar clave</button>
+              ${u.activo === false
+                ? `<button class="small-btn" onclick="activarUsuario('${u.id}')">Activar</button>`
+                : `<button class="small-btn danger-btn" onclick="deleteUsuario('${u.id}')">Desactivar</button>`}
+            </td>
+          </tr>
+        `).join("");
+    }
+  }
+
 }
 
 function renderKPIs() {

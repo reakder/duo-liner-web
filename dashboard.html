@@ -26,6 +26,7 @@
       <button class="side-link" onclick="showView('pedidos', this)">Pedidos</button>
       <button class="side-link" onclick="showView('pagos', this)">Pagos</button>
       <button class="side-link" onclick="showView('cuenta', this)">Cuenta corriente</button>
+      <button class="side-link" onclick="showView('usuarios', this)">Usuarios</button>
       <button class="side-link danger" onclick="logout()">Salir</button>
     </nav>
   </aside>
@@ -148,6 +149,43 @@
       <div class="app-head"><div><span class="section-label">Finanzas</span><h1>Cuenta corriente</h1></div></div>
       <div class="panel"><h2>Saldos por cliente</h2><div class="table-wrap"><table id="tablaCuenta"></table></div></div>
     </section>
+  
+    <section id="view-usuarios" class="view hidden">
+      <div class="app-head"><div><span class="section-label">Seguridad</span><h1>Usuarios</h1></div></div>
+
+      <div class="panel">
+        <h2>Nuevo usuario</h2>
+        <div class="form-grid">
+          <input id="usuarioNombre" placeholder="Nombre completo">
+          <input id="usuarioUsuario" placeholder="Usuario">
+          <input id="usuarioPassword" type="password" placeholder="Contraseña mínima 8 caracteres">
+          <select id="usuarioRol">
+            <option value="usuario">Usuario</option>
+            <option value="admin">Administrador</option>
+          </select>
+          <select id="usuarioActivo">
+            <option value="true">Activo</option>
+            <option value="false">Inactivo</option>
+          </select>
+          <button class="btn-form" onclick="addUsuario()">Guardar usuario</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Cambiar mi contraseña</h2>
+        <div class="form-grid">
+          <input id="miPasswordActual" type="password" placeholder="Contraseña actual">
+          <input id="miPasswordNueva" type="password" placeholder="Nueva contraseña">
+          <button class="btn-form" onclick="cambiarMiPassword()">Cambiar contraseña</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Listado de usuarios</h2>
+        <div class="table-wrap"><table id="tablaUsuarios"></table></div>
+      </div>
+    </section>
+
   </main>
 
   <script src="dashboard.js"></script>
