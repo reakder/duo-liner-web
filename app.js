@@ -55,3 +55,21 @@ if(quoteForm){
     }
   });
 }
+
+
+document.addEventListener("DOMContentLoaded",()=>{
+ const lightbox=document.getElementById("imageLightbox");
+ const lightboxImg=document.getElementById("imageLightboxImg");
+ const closeBtn=document.getElementById("imageLightboxClose");
+ if(!lightbox||!lightboxImg||!closeBtn) return;
+ document.querySelectorAll("img").forEach(img=>{
+   if(img.closest(".brand")) return;
+   img.classList.add("zoomable-image");
+   img.addEventListener("click",()=>{
+      lightboxImg.src=img.src;
+      lightbox.classList.add("open");
+   });
+ });
+ closeBtn.addEventListener("click",()=>lightbox.classList.remove("open"));
+ lightbox.addEventListener("click",(e)=>{if(e.target===lightbox) lightbox.classList.remove("open");});
+});
