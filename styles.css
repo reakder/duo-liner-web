@@ -817,3 +817,204 @@ td select {
     bottom:94px;
   }
 }
+
+
+
+/* =====================================================
+   INTRO ANIMADO DUO-LINER
+   Liners cayendo + aparición de marca
+   ===================================================== */
+
+.duo-intro{
+  position:fixed;
+  inset:0;
+  z-index:100000;
+  background:#05070a;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  transition:opacity .75s ease, visibility .75s ease;
+}
+
+.duo-intro.hide{
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+}
+
+.duo-intro-bg{
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(0,167,183,.32), transparent 24%),
+    radial-gradient(circle at 78% 18%, rgba(34,83,155,.55), transparent 30%),
+    radial-gradient(circle at 15% 80%, rgba(0,167,183,.18), transparent 32%),
+    linear-gradient(145deg,#020407,#07101d 48%,#122b54);
+}
+
+.intro-brand{
+  position:relative;
+  z-index:4;
+  text-align:center;
+  transform:translateY(28px) scale(.92);
+  opacity:0;
+  animation:introBrandIn 1.25s ease forwards 1.05s;
+}
+
+.intro-logo-wrap{
+  width:min(520px,82vw);
+  background:#fff;
+  border-radius:24px;
+  padding:18px 28px;
+  margin:0 auto 22px;
+  box-shadow:0 30px 90px rgba(0,0,0,.34);
+  border:1px solid rgba(255,255,255,.32);
+}
+
+.intro-logo-wrap img{
+  width:100%;
+  height:auto;
+  display:block;
+}
+
+.intro-brand h2{
+  font-family:"Archivo Black",Inter,Arial,sans-serif;
+  color:#fff;
+  font-size:clamp(42px,8vw,92px);
+  line-height:.9;
+  letter-spacing:-3px;
+  text-transform:uppercase;
+  text-shadow:0 18px 45px rgba(0,0,0,.42);
+}
+
+.intro-brand p{
+  margin-top:14px;
+  color:#d9efff;
+  font-size:clamp(16px,2.2vw,24px);
+  font-weight:900;
+  letter-spacing:.04em;
+}
+
+.liner-rain{
+  position:absolute;
+  inset:-160px 0 0 0;
+  z-index:2;
+  pointer-events:none;
+}
+
+.falling-liner{
+  position:absolute;
+  top:-160px;
+  width:92px;
+  height:92px;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at center, transparent 32%, #f9fbff 34% 55%, #dbe6f4 57% 61%, transparent 63%),
+    radial-gradient(circle at 34% 28%, rgba(255,255,255,.95), transparent 28%);
+  border:5px solid rgba(255,255,255,.92);
+  box-shadow:
+    inset 0 0 18px rgba(34,83,155,.22),
+    0 18px 35px rgba(0,0,0,.28);
+  opacity:.9;
+  animation-name:linerFall;
+  animation-timing-function:cubic-bezier(.18,.72,.22,1);
+  animation-fill-mode:forwards;
+}
+
+.falling-liner::after{
+  content:"";
+  position:absolute;
+  inset:23px;
+  border-radius:50%;
+  border:4px solid rgba(34,83,155,.35);
+}
+
+.falling-liner.l1{left:6%; animation-duration:1.55s; animation-delay:.05s; transform:scale(.74) rotate(14deg);}
+.falling-liner.l2{left:16%; animation-duration:1.95s; animation-delay:.20s; transform:scale(.52) rotate(-28deg);}
+.falling-liner.l3{left:28%; animation-duration:1.70s; animation-delay:.00s; transform:scale(.82) rotate(36deg);}
+.falling-liner.l4{left:40%; animation-duration:2.10s; animation-delay:.22s; transform:scale(.58) rotate(-12deg);}
+.falling-liner.l5{left:52%; animation-duration:1.80s; animation-delay:.10s; transform:scale(.96) rotate(42deg);}
+.falling-liner.l6{left:64%; animation-duration:2.05s; animation-delay:.04s; transform:scale(.62) rotate(-38deg);}
+.falling-liner.l7{left:76%; animation-duration:1.68s; animation-delay:.18s; transform:scale(.80) rotate(18deg);}
+.falling-liner.l8{left:88%; animation-duration:2.18s; animation-delay:.08s; transform:scale(.54) rotate(-24deg);}
+.falling-liner.l9{left:11%; animation-duration:2.25s; animation-delay:.44s; transform:scale(.44) rotate(12deg);}
+.falling-liner.l10{left:35%; animation-duration:2.38s; animation-delay:.38s; transform:scale(.46) rotate(-44deg);}
+.falling-liner.l11{left:59%; animation-duration:2.28s; animation-delay:.48s; transform:scale(.42) rotate(26deg);}
+.falling-liner.l12{left:82%; animation-duration:2.44s; animation-delay:.36s; transform:scale(.48) rotate(-18deg);}
+
+@keyframes linerFall{
+  0%{
+    top:-160px;
+    opacity:0;
+    filter:blur(1px);
+  }
+  18%{
+    opacity:.95;
+  }
+  100%{
+    top:112vh;
+    opacity:.12;
+    filter:blur(0);
+  }
+}
+
+@keyframes introBrandIn{
+  0%{
+    opacity:0;
+    transform:translateY(42px) scale(.86);
+    filter:blur(8px);
+  }
+  58%{
+    opacity:1;
+    transform:translateY(-6px) scale(1.025);
+    filter:blur(0);
+  }
+  100%{
+    opacity:1;
+    transform:translateY(0) scale(1);
+    filter:blur(0);
+  }
+}
+
+body.intro-active{
+  overflow:hidden;
+}
+
+@media(max-width:640px){
+  .intro-logo-wrap{
+    border-radius:18px;
+    padding:14px 18px;
+  }
+
+  .falling-liner{
+    width:62px;
+    height:62px;
+    border-width:4px;
+  }
+
+  .falling-liner::after{
+    inset:15px;
+    border-width:3px;
+  }
+
+  .intro-brand h2{
+    letter-spacing:-1.5px;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .falling-liner,
+  .intro-brand{
+    animation:none;
+  }
+
+  .intro-brand{
+    opacity:1;
+    transform:none;
+  }
+
+  .duo-intro{
+    display:none;
+  }
+}

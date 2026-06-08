@@ -77,3 +77,32 @@ document.addEventListener("DOMContentLoaded",()=>{
  lightbox.addEventListener("click",(e)=>{if(e.target===lightbox) lightbox.classList.remove("open");});
  document.addEventListener("keydown",(e)=>{if(e.key==="Escape") lightbox.classList.remove("open");});
 });
+
+
+
+// =====================================================
+// INTRO ANIMADO DUO-LINER
+// Muestra liners cayendo y luego revela la página
+// =====================================================
+document.addEventListener("DOMContentLoaded", () => {
+  const intro = document.getElementById("duoIntro");
+  if (!intro) return;
+
+  const alreadySeen = sessionStorage.getItem("duoIntroSeen") === "true";
+
+  if (alreadySeen) {
+    intro.classList.add("hide");
+    document.body.classList.remove("intro-active");
+    setTimeout(() => intro.remove(), 400);
+    return;
+  }
+
+  document.body.classList.add("intro-active");
+
+  setTimeout(() => {
+    intro.classList.add("hide");
+    document.body.classList.remove("intro-active");
+    sessionStorage.setItem("duoIntroSeen", "true");
+    setTimeout(() => intro.remove(), 850);
+  }, 3350);
+});
