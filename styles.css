@@ -601,43 +601,164 @@ td select {
 
 
 /* =====================================================
-   IMAGEN CATALOGO EN SECCION MARCA
+   SECCION MARCA MODERNA - DUO-LINER
+   Imagen grande + mensaje comercial
    ===================================================== */
-.trust-catalog-image {
-  width: 100%;
-  max-width: 330px;
-  align-self: start;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 28px;
-  padding: 10px;
-  box-shadow: var(--shadow);
-  overflow: hidden;
+
+.trust-grid-modern{
+  grid-template-columns: minmax(330px, 500px) 1fr;
+  align-items: center;
+  gap: 54px;
 }
 
-.trust-catalog-image img {
+.trust-product-image{
   width: 100%;
-  height: 310px;
-  object-fit: cover;
-  object-position: center;
-  border-radius: 22px;
+  margin: 0;
+  position: relative;
+  border-radius: 34px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(0,167,183,.16), transparent 36%),
+    linear-gradient(160deg, #07101d, #122b54 58%, #22539b);
+  border: 1px solid rgba(34,83,155,.20);
+  box-shadow: var(--shadow);
+  min-height: 560px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 26px;
+}
+
+.trust-product-image::before{
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 26px;
+  pointer-events: none;
+}
+
+.trust-product-image::after{
+  content: "Aplicación real";
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  color: #fff;
+  background: rgba(5,7,10,.72);
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.trust-product-image img{
+  width: 100%;
+  max-height: 510px;
+  object-fit: contain;
+  filter: drop-shadow(0 28px 34px rgba(0,0,0,.34));
+  position: relative;
+  z-index: 1;
+}
+
+.trust-grid-modern .trust-copy{
+  max-width: 780px;
+}
+
+.trust-grid-modern .section-kicker{
+  margin-bottom: 18px;
+}
+
+.trust-cards-modern{
+  grid-column: auto;
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.trust-cards-modern div{
+  min-height: 130px;
 }
 
 @media(max-width:980px){
-  .trust-catalog-image {
-    max-width: 100%;
+  .trust-grid-modern{
+    grid-template-columns: 1fr;
   }
 
-  .trust-catalog-image img {
-    height: auto;
-    max-height: 420px;
-    object-fit: contain;
+  .trust-product-image{
+    min-height: auto;
+    max-width: 620px;
+    margin: 0 auto;
+  }
+
+  .trust-product-image img{
+    max-height: 520px;
+  }
+
+  .trust-cards-modern{
+    grid-template-columns: 1fr;
   }
 }
 
+@media(max-width:640px){
+  .trust-product-image{
+    border-radius: 24px;
+    padding: 18px;
+  }
+
+  .trust-product-image img{
+    max-height: 420px;
+  }
+
+  .trust-product-image::after{
+    left: 16px;
+    bottom: 16px;
+    font-size: 11px;
+  }
+}
+
+/* =====================================================
+   LIGHTBOX DE IMAGENES - DUO-LINER
+   ===================================================== */
 
 .zoomable-image{cursor:zoom-in;}
-.image-lightbox{position:fixed;inset:0;background:rgba(5,7,10,.9);z-index:99999;display:none;align-items:center;justify-content:center;padding:20px;}
+
+.image-lightbox{
+  position:fixed;
+  inset:0;
+  background:rgba(5,7,10,.9);
+  z-index:99999;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
 .image-lightbox.open{display:flex;}
-.image-lightbox img{max-width:95vw;max-height:90vh;object-fit:contain;border-radius:18px;background:#fff;padding:10px;}
-.image-lightbox-close{position:absolute;top:20px;right:20px;width:50px;height:50px;border:none;border-radius:50%;background:#fff;color:#05070a;font-size:34px;cursor:pointer;font-weight:900;}
+
+.image-lightbox img{
+  max-width:95vw;
+  max-height:90vh;
+  object-fit:contain;
+  border-radius:18px;
+  background:#fff;
+  padding:10px;
+}
+
+.image-lightbox-close{
+  position:absolute;
+  top:20px;
+  right:20px;
+  width:50px;
+  height:50px;
+  border:none;
+  border-radius:50%;
+  background:#fff;
+  color:#05070a;
+  font-size:34px;
+  cursor:pointer;
+  font-weight:900;
+  z-index:2;
+}

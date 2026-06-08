@@ -62,14 +62,18 @@ document.addEventListener("DOMContentLoaded",()=>{
  const lightboxImg=document.getElementById("imageLightboxImg");
  const closeBtn=document.getElementById("imageLightboxClose");
  if(!lightbox||!lightboxImg||!closeBtn) return;
+
  document.querySelectorAll("img").forEach(img=>{
    if(img.closest(".brand")) return;
    img.classList.add("zoomable-image");
    img.addEventListener("click",()=>{
       lightboxImg.src=img.src;
+      lightboxImg.alt=img.alt||"Imagen DUO-LINER";
       lightbox.classList.add("open");
    });
  });
+
  closeBtn.addEventListener("click",()=>lightbox.classList.remove("open"));
  lightbox.addEventListener("click",(e)=>{if(e.target===lightbox) lightbox.classList.remove("open");});
+ document.addEventListener("keydown",(e)=>{if(e.key==="Escape") lightbox.classList.remove("open");});
 });
