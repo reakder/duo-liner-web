@@ -599,6 +599,43 @@ td select {
 }
 
 
+
+/* =====================================================
+   IMAGEN CATALOGO EN SECCION MARCA
+   ===================================================== */
+.trust-catalog-image {
+  width: 100%;
+  max-width: 330px;
+  align-self: start;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  padding: 10px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.trust-catalog-image img {
+  width: 100%;
+  height: 310px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 22px;
+}
+
+@media(max-width:980px){
+  .trust-catalog-image {
+    max-width: 100%;
+  }
+
+  .trust-catalog-image img {
+    height: auto;
+    max-height: 420px;
+    object-fit: contain;
+  }
+}
+
+
 .zoomable-image{cursor:zoom-in;}
 .image-lightbox{position:fixed;inset:0;background:rgba(5,7,10,.9);z-index:99999;display:none;align-items:center;justify-content:center;padding:20px;}
 .image-lightbox.open{display:flex;}
