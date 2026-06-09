@@ -7,14 +7,37 @@ if(menuToggle&&navLinks){
   navLinks.querySelectorAll("a").forEach(a=>a.addEventListener("click",()=>navLinks.classList.remove("open")));
 }
 
-const reveals=document.querySelectorAll(".reveal");
-if("IntersectionObserver" in window){
-  const observer=new IntersectionObserver(entries=>{
-    entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add("visible");entry.target.classList.add("show");}});
-  },{threshold:.12});
-  reveals.forEach(item=>observer.observe(item));
-}else{reveals.forEach(item=>{item.classList.add("visible");item.classList.add("show");});}
+// =====================================================
+// INTERSECTION OBSERVER MEJORADO - ANIMACIONES STAGGER
+// =====================================================
+document.addEventListener("DOMContentLoaded", () => {
+  const reveals = document.querySelectorAll(".reveal, .product-card, .application-card, .service-card, .trust-cards > div, .hero-card");
 
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, index) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => {
+            entry.target.classList.add("visible");
+            entry.target.classList.add("show");
+          }, index * 70); // Efecto stagger bonito
+        }
+      });
+    }, {
+      threshold: 0.15,
+      rootMargin: "0px 0px -60px 0px"
+    });
+
+    reveals.forEach(item => observer.observe(item));
+  } else {
+    reveals.forEach(item => {
+      item.classList.add("visible");
+      item.classList.add("show");
+    });
+  }
+});
+
+// Product links
 const productLinks=document.querySelectorAll(".product-quote");
 productLinks.forEach(link=>{
   link.addEventListener("click",()=>{
@@ -31,6 +54,7 @@ productLinks.forEach(link=>{
   });
 });
 
+// Quote form (mantengo igual)
 const quoteForm=document.getElementById("quoteForm");
 if(quoteForm){
   quoteForm.addEventListener("submit",async e=>{
@@ -54,9 +78,9 @@ if(quoteForm){
       alert("No fue posible enviar la cotizacion. Intente nuevamente.");
     }
   });
-}
+});
 
-
+// Lightbox
 document.addEventListener("DOMContentLoaded",()=>{
  const lightbox=document.getElementById("imageLightbox");
  const lightboxImg=document.getElementById("imageLightboxImg");
@@ -78,11 +102,7 @@ document.addEventListener("DOMContentLoaded",()=>{
  document.addEventListener("keydown",(e)=>{if(e.key==="Escape") lightbox.classList.remove("open");});
 });
 
-
-
-// =====================================================
-// INTRO ANIMADO DUO-LINER CON LINERS REALES
-// =====================================================
+// Intro Animado (mantienes el tuyo)
 document.addEventListener("DOMContentLoaded", () => {
   const intro = document.getElementById("duoIntro");
   if (!intro) return;
