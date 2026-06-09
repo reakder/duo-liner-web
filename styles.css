@@ -1031,3 +1031,61 @@ body.intro-active{
     display:none;
   }
 }
+
+
+
+/* =====================================================
+   INTRO DUO-LINER CON LOGO REAL
+   ===================================================== */
+
+.intro-logo-panel{
+  width:min(860px,86vw);
+  margin:0 auto 22px;
+  padding:22px 34px;
+  background:rgba(255,255,255,.96);
+  border-radius:26px;
+  border:1px solid rgba(255,255,255,.36);
+  box-shadow:
+    0 30px 90px rgba(0,0,0,.42),
+    0 0 55px rgba(34,83,155,.32);
+  transform:translateY(26px) scale(.92);
+  opacity:0;
+  animation:introLogoRealIn 1.25s ease forwards 1.05s;
+}
+
+.intro-logo-panel img{
+  width:100%;
+  height:auto;
+  display:block;
+  filter:drop-shadow(0 8px 12px rgba(0,0,0,.16));
+}
+
+.intro-brand h2{
+  display:none !important;
+}
+
+@keyframes introLogoRealIn{
+  0%{
+    opacity:0;
+    transform:translateY(46px) scale(.82);
+    filter:blur(10px);
+  }
+  58%{
+    opacity:1;
+    transform:translateY(-6px) scale(1.025);
+    filter:blur(0);
+  }
+  100%{
+    opacity:1;
+    transform:translateY(0) scale(1);
+    filter:blur(0);
+  }
+}
+
+@media(max-width:640px){
+  .intro-logo-panel{
+    width:90vw;
+    padding:14px 16px;
+    border-radius:18px;
+  }
+}
