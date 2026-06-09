@@ -764,6 +764,200 @@ td select {
 }
 
 
+
+/* =====================================================
+   INTRO ANIMADO DUO-LINER - LINERS REALES
+   ===================================================== */
+
+.duo-intro{
+  position:fixed;
+  inset:0;
+  z-index:100000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  background:#020407;
+  transition:opacity .85s ease, visibility .85s ease;
+}
+
+.duo-intro.hide{
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+}
+
+.duo-intro-bg{
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255,255,255,.20), transparent 8%),
+    radial-gradient(circle at 50% 42%, rgba(0,167,183,.20), transparent 28%),
+    radial-gradient(circle at 80% 16%, rgba(34,83,155,.40), transparent 35%),
+    linear-gradient(145deg,#020407,#07101d 48%,#122b54);
+}
+
+.duo-intro-bg::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.025) 0 1px, transparent 1px 140px),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 120px);
+  opacity:.35;
+}
+
+.intro-light{
+  position:absolute;
+  width:34vw;
+  height:34vw;
+  border-radius:50%;
+  filter:blur(70px);
+  opacity:.34;
+  pointer-events:none;
+}
+
+.intro-light-one{
+  top:-10vw;
+  left:34vw;
+  background:#ffffff;
+}
+
+.intro-light-two{
+  bottom:-12vw;
+  right:4vw;
+  background:#22539b;
+}
+
+.liner-rain{
+  position:absolute;
+  inset:-220px -80px 0 -80px;
+  z-index:2;
+  perspective:900px;
+  pointer-events:none;
+}
+
+.falling-liner-img{
+  position:absolute;
+  top:-220px;
+  width:clamp(78px, 8vw, 142px);
+  height:auto;
+  object-fit:contain;
+  filter:
+    drop-shadow(0 24px 24px rgba(0,0,0,.38))
+    drop-shadow(0 0 12px rgba(255,255,255,.10));
+  opacity:0;
+  animation-name:realLinerFall;
+  animation-timing-function:cubic-bezier(.17,.67,.22,1);
+  animation-fill-mode:forwards;
+  transform-origin:center;
+}
+
+.falling-liner-img.f1{left:3%; animation-duration:2.85s; animation-delay:.02s; --sx:.95; --r1:-22deg; --r2:420deg; --tx:24px;}
+.falling-liner-img.f2{left:11%; animation-duration:3.10s; animation-delay:.18s; --sx:.66; --r1:36deg; --r2:-390deg; --tx:-34px;}
+.falling-liner-img.f3{left:20%; animation-duration:2.75s; animation-delay:.04s; --sx:.78; --r1:-18deg; --r2:360deg; --tx:46px;}
+.falling-liner-img.f4{left:29%; animation-duration:3.22s; animation-delay:.30s; --sx:.54; --r1:44deg; --r2:-520deg; --tx:-42px;}
+.falling-liner-img.f5{left:38%; animation-duration:2.92s; animation-delay:.10s; --sx:.88; --r1:-34deg; --r2:480deg; --tx:22px;}
+.falling-liner-img.f6{left:47%; animation-duration:3.30s; animation-delay:.25s; --sx:.60; --r1:12deg; --r2:-450deg; --tx:-28px;}
+.falling-liner-img.f7{left:56%; animation-duration:2.80s; animation-delay:.06s; --sx:.82; --r1:30deg; --r2:530deg; --tx:54px;}
+.falling-liner-img.f8{left:66%; animation-duration:3.18s; animation-delay:.16s; --sx:.64; --r1:-44deg; --r2:-410deg; --tx:-44px;}
+.falling-liner-img.f9{left:75%; animation-duration:2.95s; animation-delay:.02s; --sx:.76; --r1:18deg; --r2:390deg; --tx:18px;}
+.falling-liner-img.f10{left:86%; animation-duration:3.28s; animation-delay:.22s; --sx:.58; --r1:-28deg; --r2:-520deg; --tx:-32px;}
+.falling-liner-img.f11{left:7%; animation-duration:3.55s; animation-delay:.58s; --sx:.44; --r1:16deg; --r2:450deg; --tx:62px;}
+.falling-liner-img.f12{left:35%; animation-duration:3.65s; animation-delay:.50s; --sx:.42; --r1:-18deg; --r2:-440deg; --tx:-66px;}
+.falling-liner-img.f13{left:62%; animation-duration:3.50s; animation-delay:.62s; --sx:.48; --r1:28deg; --r2:560deg; --tx:72px;}
+.falling-liner-img.f14{left:91%; animation-duration:3.68s; animation-delay:.52s; --sx:.46; --r1:-10deg; --r2:-390deg; --tx:-70px;}
+
+@keyframes realLinerFall{
+  0%{
+    top:-220px;
+    opacity:0;
+    transform:translateX(0) rotate(var(--r1)) rotateY(0deg) scale(var(--sx));
+    filter:blur(2px) drop-shadow(0 20px 20px rgba(0,0,0,.32));
+  }
+  16%{
+    opacity:1;
+  }
+  52%{
+    transform:translateX(calc(var(--tx) * .55)) rotate(calc(var(--r2) * .55)) rotateY(78deg) scale(var(--sx));
+  }
+  100%{
+    top:112vh;
+    opacity:.25;
+    transform:translateX(var(--tx)) rotate(var(--r2)) rotateY(180deg) scale(var(--sx));
+    filter:blur(.2px) drop-shadow(0 26px 28px rgba(0,0,0,.40));
+  }
+}
+
+.intro-brand{
+  position:relative;
+  z-index:4;
+  width:min(920px,92vw);
+  text-align:center;
+  opacity:0;
+  transform:translateY(36px) scale(.9);
+  animation:introBrandCinematic 1.45s ease forwards 1.10s;
+}
+
+.intro-brand h2{
+  font-family:"Archivo Black",Inter,Arial,sans-serif;
+  font-size:clamp(54px,11vw,150px);
+  line-height:.82;
+  letter-spacing:-5px;
+  text-transform:uppercase;
+  color:#dfe8f4;
+  text-shadow:
+    0 5px 0 rgba(255,255,255,.10),
+    0 24px 70px rgba(0,0,0,.64),
+    0 0 28px rgba(34,83,155,.55);
+  background:linear-gradient(180deg,#ffffff,#aab9ca 52%,#4f647c);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+.intro-brand p{
+  margin-top:18px;
+  color:#eef6ff;
+  text-transform:uppercase;
+  font-size:clamp(14px,2.4vw,24px);
+  letter-spacing:.16em;
+  font-weight:900;
+  text-shadow:0 12px 34px rgba(0,0,0,.45);
+}
+
+.intro-progress{
+  width:min(420px,72vw);
+  height:7px;
+  margin:28px auto 0;
+  background:rgba(255,255,255,.24);
+  border-radius:999px;
+  overflow:hidden;
+  box-shadow:0 0 24px rgba(0,167,183,.28);
+}
+
+.intro-progress span{
+  display:block;
+  height:100%;
+  width:0;
+  background:linear-gradient(90deg,#00a7b7,#ffffff,#22539b);
+  animation:introProgress 2.45s ease forwards .75s;
+}
+
+@keyframes introBrandCinematic{
+  0%{opacity:0; transform:translateY(48px) scale(.84); filter:blur(12px);}
+  60%{opacity:1; transform:translateY(-6px) scale(1.02); filter:blur(0);}
+  100%{opacity:1; transform:translateY(0) scale(1); filter:blur(0);}
+}
+
+@keyframes introProgress{
+  to{width:100%;}
+}
+
+body.intro-active{
+  overflow:hidden;
+}
+
 /* DUO-LINER SOCIAL BUTTONS */
 .floating-whatsapp{
   position:fixed;
@@ -818,202 +1012,21 @@ td select {
   }
 }
 
-
-
-/* =====================================================
-   INTRO ANIMADO DUO-LINER
-   Liners cayendo + aparición de marca
-   ===================================================== */
-
-.duo-intro{
-  position:fixed;
-  inset:0;
-  z-index:100000;
-  background:#05070a;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
-  transition:opacity .75s ease, visibility .75s ease;
-}
-
-.duo-intro.hide{
-  opacity:0;
-  visibility:hidden;
-  pointer-events:none;
-}
-
-.duo-intro-bg{
-  position:absolute;
-  inset:0;
-  background:
-    radial-gradient(circle at 50% 42%, rgba(0,167,183,.32), transparent 24%),
-    radial-gradient(circle at 78% 18%, rgba(34,83,155,.55), transparent 30%),
-    radial-gradient(circle at 15% 80%, rgba(0,167,183,.18), transparent 32%),
-    linear-gradient(145deg,#020407,#07101d 48%,#122b54);
-}
-
-.intro-brand{
-  position:relative;
-  z-index:4;
-  text-align:center;
-  transform:translateY(28px) scale(.92);
-  opacity:0;
-  animation:introBrandIn 1.25s ease forwards 1.05s;
-}
-
-.intro-logo-wrap{
-  width:min(520px,82vw);
-  background:#fff;
-  border-radius:24px;
-  padding:18px 28px;
-  margin:0 auto 22px;
-  box-shadow:0 30px 90px rgba(0,0,0,.34);
-  border:1px solid rgba(255,255,255,.32);
-}
-
-.intro-logo-wrap img{
-  width:100%;
-  height:auto;
-  display:block;
-}
-
-.intro-brand h2{
-  font-family:"Archivo Black",Inter,Arial,sans-serif;
-  color:#fff;
-  font-size:clamp(42px,8vw,92px);
-  line-height:.9;
-  letter-spacing:-3px;
-  text-transform:uppercase;
-  text-shadow:0 18px 45px rgba(0,0,0,.42);
-}
-
-.intro-brand p{
-  margin-top:14px;
-  color:#d9efff;
-  font-size:clamp(16px,2.2vw,24px);
-  font-weight:900;
-  letter-spacing:.04em;
-}
-
-.liner-rain{
-  position:absolute;
-  inset:-160px 0 0 0;
-  z-index:2;
-  pointer-events:none;
-}
-
-.falling-liner{
-  position:absolute;
-  top:-160px;
-  width:92px;
-  height:92px;
-  border-radius:50%;
-  background:
-    radial-gradient(circle at center, transparent 32%, #f9fbff 34% 55%, #dbe6f4 57% 61%, transparent 63%),
-    radial-gradient(circle at 34% 28%, rgba(255,255,255,.95), transparent 28%);
-  border:5px solid rgba(255,255,255,.92);
-  box-shadow:
-    inset 0 0 18px rgba(34,83,155,.22),
-    0 18px 35px rgba(0,0,0,.28);
-  opacity:.9;
-  animation-name:linerFall;
-  animation-timing-function:cubic-bezier(.18,.72,.22,1);
-  animation-fill-mode:forwards;
-}
-
-.falling-liner::after{
-  content:"";
-  position:absolute;
-  inset:23px;
-  border-radius:50%;
-  border:4px solid rgba(34,83,155,.35);
-}
-
-.falling-liner.l1{left:6%; animation-duration:1.55s; animation-delay:.05s; transform:scale(.74) rotate(14deg);}
-.falling-liner.l2{left:16%; animation-duration:1.95s; animation-delay:.20s; transform:scale(.52) rotate(-28deg);}
-.falling-liner.l3{left:28%; animation-duration:1.70s; animation-delay:.00s; transform:scale(.82) rotate(36deg);}
-.falling-liner.l4{left:40%; animation-duration:2.10s; animation-delay:.22s; transform:scale(.58) rotate(-12deg);}
-.falling-liner.l5{left:52%; animation-duration:1.80s; animation-delay:.10s; transform:scale(.96) rotate(42deg);}
-.falling-liner.l6{left:64%; animation-duration:2.05s; animation-delay:.04s; transform:scale(.62) rotate(-38deg);}
-.falling-liner.l7{left:76%; animation-duration:1.68s; animation-delay:.18s; transform:scale(.80) rotate(18deg);}
-.falling-liner.l8{left:88%; animation-duration:2.18s; animation-delay:.08s; transform:scale(.54) rotate(-24deg);}
-.falling-liner.l9{left:11%; animation-duration:2.25s; animation-delay:.44s; transform:scale(.44) rotate(12deg);}
-.falling-liner.l10{left:35%; animation-duration:2.38s; animation-delay:.38s; transform:scale(.46) rotate(-44deg);}
-.falling-liner.l11{left:59%; animation-duration:2.28s; animation-delay:.48s; transform:scale(.42) rotate(26deg);}
-.falling-liner.l12{left:82%; animation-duration:2.44s; animation-delay:.36s; transform:scale(.48) rotate(-18deg);}
-
-@keyframes linerFall{
-  0%{
-    top:-160px;
-    opacity:0;
-    filter:blur(1px);
-  }
-  18%{
-    opacity:.95;
-  }
-  100%{
-    top:112vh;
-    opacity:.12;
-    filter:blur(0);
-  }
-}
-
-@keyframes introBrandIn{
-  0%{
-    opacity:0;
-    transform:translateY(42px) scale(.86);
-    filter:blur(8px);
-  }
-  58%{
-    opacity:1;
-    transform:translateY(-6px) scale(1.025);
-    filter:blur(0);
-  }
-  100%{
-    opacity:1;
-    transform:translateY(0) scale(1);
-    filter:blur(0);
-  }
-}
-
-body.intro-active{
-  overflow:hidden;
-}
-
 @media(max-width:640px){
-  .intro-logo-wrap{
-    border-radius:18px;
-    padding:14px 18px;
-  }
-
-  .falling-liner{
-    width:62px;
-    height:62px;
-    border-width:4px;
-  }
-
-  .falling-liner::after{
-    inset:15px;
-    border-width:3px;
+  .falling-liner-img{
+    width:78px;
   }
 
   .intro-brand h2{
-    letter-spacing:-1.5px;
+    letter-spacing:-2px;
+  }
+
+  .intro-brand p{
+    letter-spacing:.08em;
   }
 }
 
 @media(prefers-reduced-motion:reduce){
-  .falling-liner,
-  .intro-brand{
-    animation:none;
-  }
-
-  .intro-brand{
-    opacity:1;
-    transform:none;
-  }
-
   .duo-intro{
     display:none;
   }

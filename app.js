@@ -81,8 +81,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 
 
 // =====================================================
-// INTRO ANIMADO DUO-LINER
-// Muestra liners cayendo y luego revela la página
+// INTRO ANIMADO DUO-LINER CON LINERS REALES
 // =====================================================
 document.addEventListener("DOMContentLoaded", () => {
   const intro = document.getElementById("duoIntro");
@@ -93,7 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (alreadySeen) {
     intro.classList.add("hide");
     document.body.classList.remove("intro-active");
-    setTimeout(() => intro.remove(), 400);
+    setTimeout(() => intro.remove(), 350);
     return;
   }
 
@@ -103,6 +102,6 @@ document.addEventListener("DOMContentLoaded", () => {
     intro.classList.add("hide");
     document.body.classList.remove("intro-active");
     sessionStorage.setItem("duoIntroSeen", "true");
-    setTimeout(() => intro.remove(), 850);
-  }, 3350);
+    setTimeout(() => intro.remove(), 900);
+  }, 3900);
 });
