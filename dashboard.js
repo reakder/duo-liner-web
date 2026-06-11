@@ -106,13 +106,31 @@ async function apiPut(path, data) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
   });
-  if (!r.ok) throw new Error(path);
+
+  if (!r.ok) {
+    let msg = `${path} - Error ${r.status}`;
+    try {
+      const err = await r.json();
+      msg = err.detail || msg;
+    } catch (_) {}
+    throw new Error(msg);
+  }
+
   return r.json();
 }
 
 async function apiDelete(path) {
   const r = await fetch(`${BACKEND_URL}${path}`, { method: "DELETE" });
-  if (!r.ok) throw new Error(path);
+
+  if (!r.ok) {
+    let msg = `${path} - Error ${r.status}`;
+    try {
+      const err = await r.json();
+      msg = err.detail || msg;
+    } catch (_) {}
+    throw new Error(msg);
+  }
+
   return r.json();
 }
 
@@ -770,7 +788,7 @@ async function addCotizacion() {
     alert(editId ? "Cotización actualizada." : "Cotización guardada.");
   } catch (error) {
     console.error(error);
-    alert("No se pudo guardar la cotización.");
+    alert(error.message || "No se pudo guardar la cotización.");
   }
 }
 
