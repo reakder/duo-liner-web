@@ -88,7 +88,9 @@
           <select id="cotIva"><option value="si">Precio incluye IVA</option><option value="no">Precio no incluye IVA</option></select>
           <select id="cotEstado"><option>Pendiente</option><option>Enviada</option><option>Aprobada</option><option>Rechazada</option></select>
           <input id="cotObservaciones" placeholder="Observaciones">
-          <button class="btn-form" onclick="addCotizacion()">Guardar cotización</button>
+          <input id="cotEditId" type="hidden" value="">
+          <button class="btn-form" id="btnGuardarCotizacion" onclick="addCotizacion()">Guardar cotización</button>
+          <button class="btn-form btn-cancel-edit hidden" id="btnCancelarEdicionCot" onclick="cancelarEdicionCotizacion()">Cancelar edición</button>
         </div>
         <p class="section-label" style="margin-top:14px;">Vigencia automática: 15 días</p>
       </div>

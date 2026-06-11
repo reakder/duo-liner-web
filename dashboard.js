@@ -689,6 +689,15 @@ function calcularTotalCotizacion() {
 }
 
 function limpiarFormularioCotizacion() {
+  const editId = document.getElementById("cotEditId");
+  if (editId) editId.value = "";
+
+  const btnGuardar = document.getElementById("btnGuardarCotizacion");
+  if (btnGuardar) btnGuardar.textContent = "Guardar cotización";
+
+  const btnCancelar = document.getElementById("btnCancelarEdicionCot");
+  if (btnCancelar) btnCancelar.classList.add("hidden");
+
   ["cotCliente", "cotDireccion", "cotObservaciones"].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.value = "";
@@ -729,10 +738,9 @@ async function addCotizacion() {
   const primerItem = items[0];
 
   try {
-    await apiPost("/cotizaciones", {
-      fecha: todayISO(),
+    const editId = document.getElementById("cotEditId")?.value || "";
+    const payload = {
       vigencia_dias: 15,
-      vigencia_hasta: addDaysISO(todayISO(), 15),
       cliente,
       direccion,
       items,
@@ -745,17 +753,72 @@ async function addCotizacion() {
       observaciones,
       estado,
       origen: "portal"
-    });
+    };
+
+    if (editId) {
+      payload.fecha_modificacion = new Date().toISOString();
+      await apiPut(`/cotizaciones/${editId}`, payload);
+    } else {
+      payload.fecha = todayISO();
+      payload.vigencia_hasta = addDaysISO(todayISO(), 15);
+      await apiPost("/cotizaciones", payload);
+    }
 
     limpiarFormularioCotizacion();
 
     await cargarMongoDB();
-    alert("Cotización guardada.");
+    alert(editId ? "Cotización actualizada." : "Cotización guardada.");
   } catch (error) {
     console.error(error);
     alert("No se pudo guardar la cotización.");
   }
 }
+
+
+function editarCotizacion(id) {
+  const cot = getDB().cotizaciones.find((c) => c.id === id);
+  if (!cot) return alert("Cotización no encontrada.");
+
+  const editId = document.getElementById("cotEditId");
+  if (editId) editId.value = id;
+
+  const cliente = document.getElementById("cotCliente");
+  if (cliente) cliente.value = cotClienteValue(cot) === "-" ? "" : cotClienteValue(cot);
+
+  const direccion = document.getElementById("cotDireccion");
+  if (direccion) direccion.value = cotDireccionValue(cot) === "-" ? "" : cotDireccionValue(cot);
+
+  const observaciones = document.getElementById("cotObservaciones");
+  if (observaciones) observaciones.value = cot.observaciones || "";
+
+  const iva = document.getElementById("cotIva");
+  if (iva) iva.value = cot.iva_incluido === false ? "no" : "si";
+
+  const estado = document.getElementById("cotEstado");
+  if (estado) estado.value = cot.estado || "Pendiente";
+
+  const contenedor = document.getElementById("itemsCotizacion");
+  if (contenedor) {
+    contenedor.innerHTML = "";
+    cotItemsValue(cot).forEach((item) => agregarItemCotizacion(item));
+  }
+
+  const btnGuardar = document.getElementById("btnGuardarCotizacion");
+  if (btnGuardar) btnGuardar.textContent = "Actualizar cotización";
+
+  const btnCancelar = document.getElementById("btnCancelarEdicionCot");
+  if (btnCancelar) btnCancelar.classList.remove("hidden");
+
+  const view = document.getElementById("view-cotizaciones");
+  if (view) view.scrollIntoView({behavior:"smooth", block:"start"});
+
+  calcularTotalCotizacion();
+}
+
+function cancelarEdicionCotizacion() {
+  limpiarFormularioCotizacion();
+}
+
 
 async function updateCotEstado(id, estado) {
   try {
@@ -1224,6 +1287,7 @@ function renderTables() {
               </select>
             </td>
             <td>
+              <button class="small-btn" onclick="editarCotizacion('${c.id}')">Editar</button>
               <button class="small-btn" onclick="printCotizacion('${c.id}')">PDF</button>
               <button class="small-btn" onclick="convertirCotizacionAPedido('${c.id}')">Pedido</button>
               <button class="small-btn danger-btn" onclick="deleteCotizacion('${c.id}')">Eliminar</button>
