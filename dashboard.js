@@ -510,6 +510,28 @@ async function deletePago(id) {
 }
 
 /* COTIZACIONES */
+const productosFrecuentesCotizacion = [
+  "Liner Sensitivo",
+  "Liner de Torque",
+  "Liner de Arandela",
+  "Liner Tri-Seal",
+  "Liner de Inducción PE",
+  "Liner de Inducción PET",
+  "Banda Termoencogible",
+  "Tampografía",
+  "Servicios DUO-LINER",
+  "Otro"
+];
+
+function escapeHTML(value){
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 function cotClienteValue(c) {
   return c.cliente || c.nombre || c.empresa || "-";
 }
@@ -518,11 +540,35 @@ function cotDireccionValue(c) {
   return c.direccion || "-";
 }
 
+function cotItemsValue(c) {
+  if (Array.isArray(c.items) && c.items.length) {
+    return c.items.map((item) => ({
+      cantidad: Number(item.cantidad || 0),
+      descripcion: item.descripcion || item.producto || "-",
+      precio: Number(item.precio || 0),
+      total: Number(item.total || (Number(item.cantidad || 0) * Number(item.precio || 0)))
+    }));
+  }
+
+  return [{
+    cantidad: Number(c.cantidad || 0),
+    descripcion: cotDescripcionValue(c),
+    precio: Number(c.precio || 0),
+    total: cotTotalValue(c)
+  }];
+}
+
 function cotDescripcionValue(c) {
+  if (Array.isArray(c.items) && c.items.length) {
+    return c.items.map((item) => item.descripcion || item.producto || "-").join(", ");
+  }
   return c.descripcion || c.producto || c.mensaje || "-";
 }
 
 function cotTotalValue(c) {
+  if (Array.isArray(c.items) && c.items.length) {
+    return c.items.reduce((a, item) => a + Number(item.total || (Number(item.cantidad || 0) * Number(item.precio || 0))), 0);
+  }
   return Number(c.total || 0);
 }
 
@@ -531,39 +577,168 @@ function cotIvaTexto(c) {
   return c.iva_incluido === false ? "Precio no incluye IVA" : "Precio incluye IVA";
 }
 
+function productoOptionsCotizacion(selected = "") {
+  return productosFrecuentesCotizacion.map((p) => {
+    const s = p === selected ? "selected" : "";
+    return `<option value="${escapeHTML(p)}" ${s}>${escapeHTML(p)}</option>`;
+  }).join("");
+}
+
+function agregarItemCotizacion(item = {}) {
+  const contenedor = document.getElementById("itemsCotizacion");
+  if (!contenedor) return;
+
+  const row = document.createElement("div");
+  row.className = "cot-item-row";
+
+  const descripcion = item.descripcion || item.producto || "";
+  const esFrecuente = productosFrecuentesCotizacion.includes(descripcion);
+  const selected = esFrecuente ? descripcion : "Otro";
+  const descripcionManual = esFrecuente ? "" : descripcion;
+
+  row.innerHTML = `
+    <input class="cotCantidad" type="number" min="0" step="0.01" placeholder="Cantidad" value="${item.cantidad || ""}">
+    <div>
+      <select class="cotProductoSelect">
+        ${productoOptionsCotizacion(selected)}
+      </select>
+      <input class="cotDescripcion cotDescripcionManual ${selected === "Otro" ? "" : "hidden"}" placeholder="Descripción personalizada" value="${escapeHTML(descripcionManual)}" style="margin-top:8px;">
+    </div>
+    <input class="cotPrecio" type="number" min="0" step="0.01" placeholder="Precio unitario" value="${item.precio || ""}">
+    <input class="cotItemTotal cot-item-total" type="number" step="0.01" placeholder="Total" readonly value="${Number(item.total || 0) ? Number(item.total || 0).toFixed(2) : ""}">
+    <button type="button" class="btn-remove-item" title="Eliminar producto">×</button>
+  `;
+
+  contenedor.appendChild(row);
+
+  row.querySelectorAll("input, select").forEach((el) => {
+    el.addEventListener("input", calcularTotalCotizacion);
+    el.addEventListener("change", calcularTotalCotizacion);
+  });
+
+  const select = row.querySelector(".cotProductoSelect");
+  const manual = row.querySelector(".cotDescripcionManual");
+  if (select && manual) {
+    select.addEventListener("change", () => {
+      if (select.value === "Otro") {
+        manual.classList.remove("hidden");
+        manual.focus();
+      } else {
+        manual.classList.add("hidden");
+        manual.value = "";
+      }
+      calcularTotalCotizacion();
+    });
+  }
+
+  const remove = row.querySelector(".btn-remove-item");
+  if (remove) {
+    remove.addEventListener("click", () => {
+      const rows = contenedor.querySelectorAll(".cot-item-row");
+      if (rows.length <= 1) {
+        row.querySelector(".cotCantidad").value = "";
+        row.querySelector(".cotPrecio").value = "";
+        row.querySelector(".cotItemTotal").value = "";
+        row.querySelector(".cotProductoSelect").value = productosFrecuentesCotizacion[0];
+        row.querySelector(".cotDescripcionManual").value = "";
+        row.querySelector(".cotDescripcionManual").classList.add("hidden");
+      } else {
+        row.remove();
+      }
+      calcularTotalCotizacion();
+    });
+  }
+
+  calcularTotalCotizacion();
+}
+
+function obtenerItemsCotizacionFormulario() {
+  const rows = document.querySelectorAll("#itemsCotizacion .cot-item-row");
+  return Array.from(rows).map((row) => {
+    const cantidad = Number(row.querySelector(".cotCantidad")?.value || 0);
+    const select = row.querySelector(".cotProductoSelect");
+    const manual = row.querySelector(".cotDescripcionManual");
+    const descripcion = select?.value === "Otro"
+      ? (manual?.value || "").trim()
+      : (select?.value || "").trim();
+    const precio = Number(row.querySelector(".cotPrecio")?.value || 0);
+    const total = cantidad * precio;
+
+    return { cantidad, descripcion, producto: descripcion, precio, total };
+  }).filter((item) => item.cantidad > 0 && item.descripcion && item.precio > 0);
+}
+
 function calcularTotalCotizacion() {
-  const cantidad = Number(document.getElementById("cotCantidad")?.value || 0);
-  const precio = Number(document.getElementById("cotPrecio")?.value || 0);
-  const total = cantidad * precio;
-  const el = document.getElementById("cotTotal");
-  if (el) el.value = total.toFixed(2);
+  let totalGeneral = 0;
+
+  document.querySelectorAll("#itemsCotizacion .cot-item-row").forEach((row) => {
+    const cantidad = Number(row.querySelector(".cotCantidad")?.value || 0);
+    const precio = Number(row.querySelector(".cotPrecio")?.value || 0);
+    const total = cantidad * precio;
+    const totalEl = row.querySelector(".cotItemTotal");
+
+    if (totalEl) totalEl.value = total ? total.toFixed(2) : "";
+    totalGeneral += total;
+  });
+
+  const totalInput = document.getElementById("cotTotal");
+  if (totalInput) totalInput.value = totalGeneral.toFixed(2);
+
+  const totalLabel = document.getElementById("cotTotalGeneral");
+  if (totalLabel) totalLabel.textContent = money(totalGeneral);
+}
+
+function limpiarFormularioCotizacion() {
+  ["cotCliente", "cotDireccion", "cotObservaciones"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+
+  const contenedor = document.getElementById("itemsCotizacion");
+  if (contenedor) {
+    contenedor.innerHTML = "";
+    agregarItemCotizacion();
+  }
+
+  const iva = document.getElementById("cotIva");
+  if (iva) iva.value = "si";
+
+  const estado = document.getElementById("cotEstado");
+  if (estado) estado.value = "Pendiente";
+
+  calcularTotalCotizacion();
 }
 
 async function addCotizacion() {
   const cliente = document.getElementById("cotCliente").value.trim();
   const direccion = document.getElementById("cotDireccion").value.trim();
-  const cantidad = Number(document.getElementById("cotCantidad").value || 0);
-  const descripcion = document.getElementById("cotDescripcion").value.trim();
-  const precio = Number(document.getElementById("cotPrecio").value || 0);
   const iva = document.getElementById("cotIva").value === "si";
   const estado = document.getElementById("cotEstado").value;
   const observaciones = document.getElementById("cotObservaciones").value.trim();
+  const items = obtenerItemsCotizacionFormulario();
 
-  if (!cliente || !descripcion || cantidad <= 0 || precio <= 0) {
-    return alert("Completa cliente, cantidad, descripción y precio.");
+  if (!cliente) {
+    return alert("Ingresa el nombre del cliente.");
   }
 
-  const total = cantidad * precio;
+  if (!items.length) {
+    return alert("Agrega al menos un producto con cantidad, descripción y precio.");
+  }
+
+  const total = items.reduce((a, item) => a + Number(item.total || 0), 0);
+  const primerItem = items[0];
 
   try {
     await apiPost("/cotizaciones", {
       fecha: todayISO(),
       vigencia_dias: 15,
+      vigencia_hasta: addDaysISO(todayISO(), 15),
       cliente,
       direccion,
-      cantidad,
-      descripcion,
-      precio,
+      items,
+      cantidad: primerItem.cantidad,
+      descripcion: items.map((i) => i.descripcion).join(", "),
+      precio: primerItem.precio,
       total,
       iva_incluido: iva,
       leyenda_iva: iva ? "Precio incluye IVA" : "Precio no incluye IVA",
@@ -572,13 +747,7 @@ async function addCotizacion() {
       origen: "portal"
     });
 
-    ["cotCliente", "cotDireccion", "cotCantidad", "cotDescripcion", "cotPrecio", "cotTotal", "cotObservaciones"].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.value = "";
-    });
-
-    document.getElementById("cotIva").value = "si";
-    document.getElementById("cotEstado").value = "Pendiente";
+    limpiarFormularioCotizacion();
 
     await cargarMongoDB();
     alert("Cotización guardada.");
@@ -633,15 +802,20 @@ async function convertirCotizacionAPedido(id) {
       };
     }
 
+    const items = cotItemsValue(cot);
+    const descripcion = items.map((i) => `${i.cantidad} x ${i.descripcion}`).join(" | ");
+    const total = cotTotalValue(cot);
+
     await apiPost("/pedidos", {
       cliente_id: cliente.id,
       fecha: todayISO(),
-      cantidad: Number(cot.cantidad || 0),
-      descripcion: cotDescripcionValue(cot),
-      producto: cotDescripcionValue(cot),
-      precio: Number(cot.precio || 0),
-      total_factura: cotTotalValue(cot),
-      total: cotTotalValue(cot),
+      cantidad: items.reduce((a, item) => a + Number(item.cantidad || 0), 0),
+      descripcion,
+      producto: descripcion,
+      precio: items.length === 1 ? Number(items[0].precio || 0) : 0,
+      total_factura: total,
+      total,
+      items,
       estado: "Nuevo",
       origen: "cotizacion",
       cotizacion_id: id
@@ -689,6 +863,17 @@ function printCotizacion(id) {
   const fecha = String(cot.fecha || cot.fecha_creacion || todayISO()).slice(0, 10);
   const vigencia = cot.vigencia_hasta || addDaysISO(fecha, 15);
   const numero = cot.numero || "COT-" + String(cot.id || "").slice(-6).toUpperCase();
+  const items = cotItemsValue(cot);
+  const total = cotTotalValue(cot);
+
+  const itemsRows = items.map((item) => `
+    <tr>
+      <td>${item.cantidad || 0}</td>
+      <td>${escapeHTML(item.descripcion || "-")}</td>
+      <td>${money(item.precio || 0)}</td>
+      <td><b>${money(item.total || 0)}</b></td>
+    </tr>
+  `).join("");
 
   const html = `<!DOCTYPE html>
 <html>
@@ -727,25 +912,20 @@ td{border-bottom:1px solid #ddd;padding:12px}
   </div>
 
   <div class="box grid">
-    <div><div class="label">Cliente</div><b>${cotClienteValue(cot)}</b></div>
-    <div><div class="label">Dirección</div>${cotDireccionValue(cot)}</div>
+    <div><div class="label">Cliente</div><b>${escapeHTML(cotClienteValue(cot))}</b></div>
+    <div><div class="label">Dirección</div>${escapeHTML(cotDireccionValue(cot))}</div>
   </div>
 
   <table>
     <tr><th>Cantidad</th><th>Descripción</th><th>Precio unitario</th><th>Total</th></tr>
-    <tr>
-      <td>${cot.cantidad || 0}</td>
-      <td>${cotDescripcionValue(cot)}</td>
-      <td>${money(cot.precio || 0)}</td>
-      <td><b>${money(cotTotalValue(cot))}</b></td>
-    </tr>
+    ${itemsRows}
   </table>
 
-  <div class="total">TOTAL: ${money(cotTotalValue(cot))}</div>
+  <div class="total">TOTAL: ${money(total)}</div>
 
   <div class="note">
-    <b>${cotIvaTexto(cot)}</b><br>
-    Vigencia de oferta: 15 días. ${cot.observaciones || ""}
+    <b>${escapeHTML(cotIvaTexto(cot))}</b><br>
+    Vigencia de oferta: 15 días. ${escapeHTML(cot.observaciones || "")}
   </div>
 
   <div class="footer">
@@ -1024,27 +1204,33 @@ function renderTables() {
   const tablaCot = document.getElementById("tablaCotizaciones");
   if (tablaCot) {
     tablaCot.innerHTML =
-      `<tr><th>Número</th><th>Fecha</th><th>Vigencia</th><th>Cliente</th><th>Total</th><th>IVA</th><th>Estado</th><th>Acciones</th></tr>` +
-      cotFiltradas.map((c) => `
-        <tr>
-          <td><b>${c.numero || ("COT-" + String(c.id || "").slice(-6).toUpperCase())}</b></td>
-          <td>${String(c.fecha || c.fecha_creacion || "").slice(0, 10)}</td>
-          <td>${c.vigencia_hasta || addDaysISO(String(c.fecha || todayISO()).slice(0, 10), 15)}</td>
-          <td>${cotClienteValue(c)}</td>
-          <td>${money(cotTotalValue(c))}</td>
-          <td>${cotIvaTexto(c)}</td>
-          <td>
-            <select onchange="updateCotEstado('${c.id}', this.value)">
-              ${["Pendiente", "Enviada", "Aprobada", "Rechazada", "Convertida a pedido"].map((e) => `<option ${c.estado === e ? "selected" : ""}>${e}</option>`).join("")}
-            </select>
-          </td>
-          <td>
-            <button class="small-btn" onclick="printCotizacion('${c.id}')">PDF</button>
-            <button class="small-btn" onclick="convertirCotizacionAPedido('${c.id}')">Pedido</button>
-            <button class="small-btn danger-btn" onclick="deleteCotizacion('${c.id}')">Eliminar</button>
-          </td>
-        </tr>
-      `).join("");
+      `<tr><th>Número</th><th>Fecha</th><th>Vigencia</th><th>Cliente</th><th>Productos</th><th>Total</th><th>IVA</th><th>Estado</th><th>Acciones</th></tr>` +
+      cotFiltradas.map((c) => {
+        const items = cotItemsValue(c);
+        const resumenItems = items.slice(0, 3).map((item) => `${item.cantidad || 0} x ${escapeHTML(item.descripcion || "-")}`).join("<br>");
+        const extra = items.length > 3 ? `<br><b>+${items.length - 3} producto(s) más</b>` : "";
+        return `
+          <tr>
+            <td><b>${c.numero || ("COT-" + String(c.id || "").slice(-6).toUpperCase())}</b></td>
+            <td>${String(c.fecha || c.fecha_creacion || "").slice(0, 10)}</td>
+            <td>${c.vigencia_hasta || addDaysISO(String(c.fecha || todayISO()).slice(0, 10), 15)}</td>
+            <td>${escapeHTML(cotClienteValue(c))}</td>
+            <td><div class="cot-items-mini">${resumenItems}${extra}</div></td>
+            <td><b>${money(cotTotalValue(c))}</b></td>
+            <td>${escapeHTML(cotIvaTexto(c))}</td>
+            <td>
+              <select onchange="updateCotEstado('${c.id}', this.value)">
+                ${["Pendiente", "Enviada", "Aprobada", "Rechazada", "Convertida a pedido"].map((e) => `<option ${c.estado === e ? "selected" : ""}>${e}</option>`).join("")}
+              </select>
+            </td>
+            <td>
+              <button class="small-btn" onclick="printCotizacion('${c.id}')">PDF</button>
+              <button class="small-btn" onclick="convertirCotizacionAPedido('${c.id}')">Pedido</button>
+              <button class="small-btn danger-btn" onclick="deleteCotizacion('${c.id}')">Eliminar</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
   }
 
   const pedidosFiltrados = obtenerPedidosFiltrados();
@@ -1298,13 +1484,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  ["cotCantidad", "cotPrecio"].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.addEventListener("input", calcularTotalCotizacion);
-      el.addEventListener("change", calcularTotalCotizacion);
-    }
-  });
+  if (document.getElementById("itemsCotizacion")) {
+    agregarItemCotizacion();
+  }
 
   if (location.pathname.includes("dashboard")) {
     cargarMongoDB();

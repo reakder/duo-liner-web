@@ -66,10 +66,25 @@
         <div class="form-grid">
           <input id="cotCliente" placeholder="Nombre del cliente">
           <input id="cotDireccion" placeholder="Dirección">
-          <input id="cotCantidad" type="number" placeholder="Cantidad">
-          <input id="cotDescripcion" placeholder="Descripción / Producto">
-          <input id="cotPrecio" type="number" step="0.01" placeholder="Precio unitario">
-          <input id="cotTotal" type="number" step="0.01" placeholder="Total" readonly>
+
+          <div class="cot-items-box">
+            <div class="cot-items-head">
+              <div>
+                <h3>Productos de la cotización</h3>
+                <p>Agrega uno o varios productos. El total se calcula automáticamente.</p>
+              </div>
+              <button type="button" class="btn-form btn-add-item" onclick="agregarItemCotizacion()">+ Agregar producto</button>
+            </div>
+
+            <div id="itemsCotizacion" class="cot-items-list"></div>
+
+            <div class="cot-total-box">
+              <span>Total general</span>
+              <strong id="cotTotalGeneral">Q0.00</strong>
+              <input id="cotTotal" type="hidden" value="0">
+            </div>
+          </div>
+
           <select id="cotIva"><option value="si">Precio incluye IVA</option><option value="no">Precio no incluye IVA</option></select>
           <select id="cotEstado"><option>Pendiente</option><option>Enviada</option><option>Aprobada</option><option>Rechazada</option></select>
           <input id="cotObservaciones" placeholder="Observaciones">
